@@ -1,29 +1,87 @@
 {
   "expo": {
-    "name": "appCliente",
-    "slug": "appCliente",
+    "name": "Emergencias Vehiculares",
+    "slug": "emergencias-vehiculares",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "scheme": "emergenciasveh",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0f172a"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.emergencias.vehiculares",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        },
+        "NSLocationWhenInUseUsageDescription": "Necesitamos tu ubicación para encontrar talleres cercanos y reportar la emergencia.",
+        "NSCameraUsageDescription": "Necesitamos acceso a la cámara para fotografiar el daño del vehículo.",
+        "NSMicrophoneUsageDescription": "Necesitamos el micrófono para que puedas describir el problema en audio.",
+        "NSPhotoLibraryUsageDescription": "Necesitamos acceso a tus fotos para adjuntar imágenes al reporte."
+      }
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
+      "usesCleartextTraffic": true,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0f172a"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.emergencias.vehiculares",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Necesitamos la cámara para fotografiar el daño."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Necesitamos tu ubicación para encontrar talleres cercanos."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#ef4444"
+        }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.tuapp",
+          "enableGooglePay": true
+        }
+      ],
+      "expo-font",
+      "expo-audio",
+      "expo-video",
+      "expo-asset"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "apiUrl": "http://192.168.100.175:8080"
     }
   }
 }
