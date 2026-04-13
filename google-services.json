@@ -1,14 +1,13 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "firebase_url": "https://emergencias-vehiculares-placeholder.firebaseio.com",
-    "project_id": "emergencias-vehiculares-placeholder",
-    "storage_bucket": "emergencias-vehiculares-placeholder.appspot.com"
+    "project_number": "679659505228",
+    "project_id": "appemergenciasbeet",
+    "storage_bucket": "appemergenciasbeet.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:679659505228:android:4843280459231401de96e9",
         "android_client_info": {
           "package_name": "com.emergencias.vehiculares"
         }
@@ -16,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSy00000000000000000000000000000000000"
+          "current_key": "AIzaSyDbTgzAUvGlRxVO5ToPv8rDoJRsGpLhTW0"
         }
       ],
       "services": {

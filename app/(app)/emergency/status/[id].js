@@ -13,6 +13,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+import EventSource from 'react-native-sse';
 import Button from '../../../../src/components/ui/Button';
 import Card from '../../../../src/components/ui/Card';
 import Badge from '../../../../src/components/ui/Badge';
@@ -20,6 +21,7 @@ import Loading from '../../../../src/components/ui/Loading';
 import { incidentsApi } from '../../../../src/api/incidents.api';
 import { useIncidentStore } from '../../../../src/store/incident.store';
 import { API_BASE_URL } from '../../../../src/constants/api';
+import { notificationsApi } from '../../../../src/api/notifications.api';
 import { resolveIncidentId } from '../../../../src/utils/incidentRoute';
 import {
   formatRelativeTime,
@@ -49,6 +51,44 @@ export default function IncidentStatusScreen() {
 
   const queryClient = useQueryClient();
   const setActiveIncident = useIncidentStore((state) => state.setActiveIncident);
+
+  useEffect(() => {
+    let stream;
+    let cancelled = false;
+
+    const connectIncidentStream = async () => {
+      if (!incidentId) return;
+
+      try {
+        const streamUrl = await notificationsApi.getIncidentStreamUrl(incidentId);
+        if (cancelled) return;
+        stream = new EventSource(streamUrl);
+        stream.addEventListener('message', (evt) => {
+          try {
+            const payload = JSON.parse(evt.data || '{}');
+            if (payload.event === 'status_change' || payload.event === 'ai_complete') {
+              queryClient.invalidateQueries({ queryKey: ['incident', incidentId] });
+              queryClient.invalidateQueries({ queryKey: ['incident-assignment', incidentId] });
+            }
+          } catch {
+            // ignore malformed events
+          }
+        });
+      } catch {
+        // fallback silencioso: ya existe polling por React Query
+      }
+    };
+
+    connectIncidentStream();
+    return () => {
+      cancelled = true;
+      try {
+        stream?.close?.();
+      } catch {
+        // ignore
+      }
+    };
+  }, [incidentId, queryClient]);
 
   const { data: incident, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['incident', incidentId],
@@ -256,6 +296,20 @@ export default function IncidentStatusScreen() {
             {getStatusDescription(incident.status)}
           </Text>
         </Card>
+
+        {incident.status === 'analyzing' ? (
+          <Card className="p-4 mb-4 bg-violet-50 border-violet-200">
+            <View className="flex-row items-center">
+              <Ionicons name="sparkles" size={22} color="#7c3aed" />
+              <Text className="text-violet-900 font-semibold ml-2">
+                Analizando con IA...
+              </Text>
+            </View>
+            <Text className="text-violet-800 text-sm mt-2">
+              Estamos procesando tu audio e imágenes para detectar el tipo de emergencia.
+            </Text>
+          </Card>
+        ) : null}
 
         {incident.description ? (
           <Card className="p-4 mb-4">

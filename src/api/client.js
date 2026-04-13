@@ -37,10 +37,14 @@ client.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      try {
-        const refresh = await SecureStore.getItemAsync('refresh_token');
-        if (!refresh) throw new Error('No refresh token');
+      const refresh = await SecureStore.getItemAsync('refresh_token');
+      if (!refresh) {
+        await SecureStore.deleteItemAsync('access_token');
+        await SecureStore.deleteItemAsync('refresh_token');
+        return Promise.reject(error);
+      }
 
+      try {
         const { data } = await axios.post(`${API_BASE_URL}${APP}/auth/refresh/`, {
           refresh,
         });
@@ -50,7 +54,6 @@ client.interceptors.response.use(
 
         return client(originalRequest);
       } catch (refreshError) {
-        // Token expirado → limpiar sesión
         await SecureStore.deleteItemAsync('access_token');
         await SecureStore.deleteItemAsync('refresh_token');
         return Promise.reject(refreshError);

@@ -8,7 +8,7 @@ import Toast from 'react-native-toast-message';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../src/store/auth.store';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
-import { STRIPE_PUBLISHABLE_KEY } from '../src/constants/api';
+import { STRIPE_PUBLISHABLE_KEY, APP_URL_SCHEME } from '../src/constants/api';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,7 +31,11 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
+        <StripeProvider
+          publishableKey={STRIPE_PUBLISHABLE_KEY}
+          urlScheme={APP_URL_SCHEME}
+          setReturnUrlSchemeOnAndroid={true}
+        >
           <StatusBar style="auto" />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
@@ -43,6 +47,14 @@ export default function RootLayout() {
                 presentation: 'modal',
                 headerShown: true,
                 title: 'Pagar Servicio',
+              }}
+            />
+            <Stack.Screen
+              name="rate/[assignmentId]"
+              options={{
+                presentation: 'modal',
+                headerShown: true,
+                title: 'Calificar',
               }}
             />
           </Stack>

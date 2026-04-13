@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Alert } from 'react-native';
+import { View, Text, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { CardField, useStripe } from '@stripe/stripe-react-native';
+import { CardField, useStripe, handleNextAction } from '@stripe/stripe-react-native';
 import Toast from 'react-native-toast-message';
 import Button from '../../src/components/ui/Button';
 import Card from '../../src/components/ui/Card';
 import Loading from '../../src/components/ui/Loading';
 import { paymentsApi } from '../../src/api/payments.api';
 import { assignmentsApi } from '../../src/api/assignments.api';
+import { useAuthStore } from '../../src/store/auth.store';
 
 export default function PaymentScreen() {
   const { assignmentId } = useLocalSearchParams();
   const queryClient = useQueryClient();
-  const { confirmPayment } = useStripe();
+  const { confirmPayment, createPaymentMethod } = useStripe();
+  const { user } = useAuthStore();
   const [cardComplete, setCardComplete] = useState(false);
   const [processing, setProcessing] = useState(false);
 
@@ -28,7 +30,7 @@ export default function PaymentScreen() {
   });
 
   const createPaymentIntentMutation = useMutation({
-    mutationFn: (data) => paymentsApi.createIntent(data),
+    mutationFn: (id) => paymentsApi.createIntent(id),
   });
 
   const handlePayment = async () => {
@@ -44,27 +46,65 @@ export default function PaymentScreen() {
     setProcessing(true);
 
     try {
-      // Crear payment intent
-      const { data: intentData } = await createPaymentIntentMutation.mutateAsync({
-        assignment_id: assignmentId,
-      });
+      // 1) PaymentIntent en backend (client_secret para confirmar en el dispositivo)
+      const { data: intentData } = await createPaymentIntentMutation.mutateAsync(assignmentId);
 
       if (!intentData.client_secret) {
         throw new Error('No se pudo crear el intento de pago');
       }
 
-      // Confirmar pago con Stripe
-      const { error, paymentIntent } = await confirmPayment(intentData.client_secret, {
+      const clientSecret = intentData.client_secret;
+
+      // 2) Crear PaymentMethod desde CardField (evita "Card details not complete" al confirmar)
+      const billingDetails = {
+        email: user?.email?.trim() || undefined,
+        name:
+          [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() ||
+          user?.username ||
+          undefined,
+      };
+
+      const { paymentMethod, error: pmError } = await createPaymentMethod({
         paymentMethodType: 'Card',
+        paymentMethodData: { billingDetails },
       });
 
-      if (error) {
-        throw new Error(error.message);
+      if (pmError) {
+        throw new Error(pmError.message || 'Completa los datos de la tarjeta');
+      }
+      if (!paymentMethod?.id) {
+        throw new Error('No se pudo leer la tarjeta');
       }
 
-      if (paymentIntent?.status === 'Succeeded') {
-        // Confirmar pago en el backend
-        await paymentsApi.confirm(intentData.payment_id);
+      // 3) Confirmar el PaymentIntent con el payment_method ya creado
+      let { error: confirmErr, paymentIntent } = await confirmPayment(clientSecret, {
+        paymentMethodType: 'Card',
+        paymentMethodData: {
+          paymentMethodId: paymentMethod.id,
+        },
+      });
+
+      if (confirmErr) {
+        throw new Error(confirmErr.message);
+      }
+
+      // 3b) 3D Secure u otra acción pendiente
+      const needsAction = String(paymentIntent?.status || '') === 'RequiresAction';
+      if (needsAction) {
+        const next = await handleNextAction(clientSecret);
+        if (next.error) {
+          throw new Error(next.error.message);
+        }
+        paymentIntent = next.paymentIntent;
+      }
+
+      const paid =
+        paymentIntent &&
+        String(paymentIntent.status || '').toLowerCase() === 'succeeded';
+
+      if (paid) {
+        // Confirmar en el backend
+        await paymentsApi.confirm(intentData.payment_intent_id);
 
         Toast.show({
           type: 'success',
@@ -76,12 +116,20 @@ export default function PaymentScreen() {
         queryClient.invalidateQueries(['assignment', assignmentId]);
         queryClient.invalidateQueries(['incidents']);
 
-        router.back();
+        const wsId = assignment?.workshop?.id ?? assignment?.workshop;
+        if (wsId) {
+          router.replace(`/rate/${assignmentId}`);
+        } else {
+          router.replace('/(app)/home');
+        }
+      } else {
+        throw new Error(`Estado del pago: ${paymentIntent?.status || 'desconocido'}`);
       }
     } catch (error) {
+      console.error('Payment error:', error);
       Alert.alert(
-        'Error en el pago',
-        error.message || 'No se pudo procesar el pago. Por favor intenta de nuevo.',
+        'No se pudo completar el pago',
+        error.message || 'Intenta de nuevo o verifica los datos de la tarjeta.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -111,19 +159,28 @@ export default function PaymentScreen() {
     );
   }
 
-  const totalAmount = assignment.estimated_cost || 0;
-  const serviceFee = totalAmount * 0.05; // 5% comisión de plataforma
-  const finalAmount = totalAmount + serviceFee;
+  const totalAmount = Number(assignment.service_cost || 0);
+  const serviceFee = 0;
+  const finalAmount = totalAmount;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['bottom']}>
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <Text className="text-dark-900 font-bold text-2xl mb-2">
-          Pagar Servicio
-        </Text>
-        <Text className="text-dark-600 text-base mb-6">
-          Completa el pago de tu servicio
-        </Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text className="text-dark-900 font-bold text-2xl mb-2">
+            Pagar Servicio
+          </Text>
+          <Text className="text-dark-600 text-base mb-6">
+            Completa el pago de tu servicio
+          </Text>
 
         {/* Información del taller */}
         {assignment.workshop && (
@@ -153,14 +210,14 @@ export default function PaymentScreen() {
           <View className="flex-row justify-between mb-3">
             <Text className="text-dark-600">Costo del servicio</Text>
             <Text className="text-dark-900 font-semibold">
-              Bs. {totalAmount.toFixed(2)}
+              ${totalAmount.toFixed(2)} USD
             </Text>
           </View>
 
           <View className="flex-row justify-between mb-3">
-            <Text className="text-dark-600">Comisión de plataforma (5%)</Text>
+            <Text className="text-dark-600">Comisión de plataforma</Text>
             <Text className="text-dark-900 font-semibold">
-              Bs. {serviceFee.toFixed(2)}
+              ${serviceFee.toFixed(2)} (incluida en el total)
             </Text>
           </View>
 
@@ -168,66 +225,82 @@ export default function PaymentScreen() {
             <View className="flex-row justify-between">
               <Text className="text-dark-900 font-bold text-lg">Total</Text>
               <Text className="text-primary-600 font-bold text-xl">
-                Bs. {finalAmount.toFixed(2)}
+                ${finalAmount.toFixed(2)} USD
               </Text>
             </View>
           </View>
         </Card>
 
-        {/* Formulario de tarjeta */}
-        <Text className="text-dark-700 font-semibold mb-3 text-sm">
-          Información de la tarjeta
-        </Text>
-
-        <View className="bg-dark-50 rounded-xl border border-dark-200 p-4 mb-6">
-          <CardField
-            postalCodeEnabled={false}
-            placeholders={{
-              number: '4242 4242 4242 4242',
-            }}
-            cardStyle={{
-              backgroundColor: '#f8fafc',
-              textColor: '#0f172a',
-              borderColor: '#e2e8f0',
-              borderWidth: 1,
-              borderRadius: 8,
-            }}
-            style={{
-              width: '100%',
-              height: 50,
-            }}
-            onCardChange={(cardDetails) => {
-              setCardComplete(cardDetails.complete);
-            }}
-          />
-        </View>
-
-        <View className="flex-row items-start bg-blue-50 rounded-lg p-3 mb-6">
-          <Ionicons name="information-circle" size={20} color="#3b82f6" />
-          <Text className="text-dark-700 text-sm ml-2 flex-1">
-            Tu pago es procesado de forma segura a través de Stripe. No almacenamos información de tu tarjeta.
+          {/* Formulario de tarjeta */}
+          <Text className="text-dark-700 font-semibold mb-3 text-base">
+            Información de la tarjeta
           </Text>
-        </View>
 
-        <Button
-          title={`Pagar Bs. ${finalAmount.toFixed(2)}`}
-          onPress={handlePayment}
-          loading={processing}
-          disabled={!cardComplete}
-          full
-          size="lg"
-          icon="card"
-          className="mb-3"
-        />
+          <Card className="p-4 mb-4 bg-white">
+            <View style={{ minHeight: 65 }}>
+              <CardField
+                postalCodeEnabled={true}
+                placeholders={{
+                  number: '4242 4242 4242 4242',
+                  expiration: 'MM/AA',
+                  cvc: 'CVC',
+                }}
+                cardStyle={{
+                  backgroundColor: '#FFFFFF',
+                  textColor: '#0f172a',
+                  placeholderColor: '#94a3b8',
+                  borderColor: '#cbd5e1',
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  fontSize: 16,
+                }}
+                style={{
+                  width: '100%',
+                  height: 55,
+                  marginVertical: 5,
+                }}
+                onCardChange={(cardDetails) => {
+                  setCardComplete(cardDetails.complete);
+                }}
+              />
+            </View>
 
-        <Button
-          title="Cancelar"
-          onPress={() => router.back()}
-          variant="ghost"
-          size="md"
-          full
-        />
-      </ScrollView>
+            <View className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+              <Text className="text-amber-800 text-xs">
+                💳 Prueba: 4242 4242 4242 4242 | Vencimiento: 12/25 | CVC: 123
+              </Text>
+            </View>
+          </Card>
+
+          <View className="flex-row items-start bg-blue-50 rounded-lg p-3 mb-4">
+            <Ionicons name="shield-checkmark" size={20} color="#3b82f6" />
+            <Text className="text-dark-700 text-xs ml-2 flex-1">
+              Pago seguro vía Stripe. No almacenamos tu información bancaria.
+            </Text>
+          </View>
+
+          <View style={{ marginBottom: Platform.OS === 'ios' ? 20 : 10 }}>
+            <Button
+              title={`Pagar $${finalAmount.toFixed(2)} USD`}
+              onPress={handlePayment}
+              loading={processing}
+              disabled={!cardComplete || processing}
+              full
+              size="lg"
+              icon="card"
+              className="mb-3"
+            />
+
+            <Button
+              title="Cancelar"
+              onPress={() => router.back()}
+              variant="ghost"
+              size="md"
+              full
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

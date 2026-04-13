@@ -60,12 +60,21 @@ export default function IncidentCard({ incident, onPress }) {
 
       {incident.assignment && (
         <View className="mt-3 pt-3 border-t border-dark-100">
-          <View className="flex-row items-center">
+          <View className="flex-row items-center flex-wrap">
             <Ionicons name="construct" size={16} color="#10b981" />
             <Text className="text-dark-700 font-semibold text-sm ml-2">
               {incident.assignment.workshop?.name || 'Taller asignado'}
             </Text>
           </View>
+          {incident.assignment.rating?.score ? (
+            <View className="flex-row items-center mt-2">
+              <Ionicons name="star" size={16} color="#fbbf24" />
+              <Text className="text-dark-600 text-sm ml-1">
+                {incident.assignment.rating.score}/5
+                {incident.assignment.payment?.status === 'client_paid' ? ' · Pagado' : ''}
+              </Text>
+            </View>
+          ) : null}
         </View>
       )}
     </Card>

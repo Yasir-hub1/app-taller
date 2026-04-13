@@ -11,6 +11,11 @@ export const workshopsApi = {
   getById: (id) =>
     client.get(`${APP}/workshops/${id}/`),
 
-  rate: (id, score, comment = '') =>
-    client.post(`${APP}/workshops/${id}/rate/`, { score, comment }),
+  /** Calificar un servicio concreto (requiere assignment_id del backend Fase 9). */
+  rate: (workshopId, { assignment_id, score, comment = '' }) =>
+    client.post(`${APP}/workshops/${workshopId}/rate/`, {
+      assignment_id,
+      score,
+      comment,
+    }),
 };

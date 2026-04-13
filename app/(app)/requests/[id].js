@@ -68,7 +68,11 @@ export default function RequestDetailScreen() {
       }
     },
     enabled: !!incidentId,
-    refetchInterval: 10000,
+    refetchInterval: (q) => {
+      const st = q.state.data?.status;
+      if (st === 'completed') return false;
+      return 10000;
+    },
   });
 
   const cancelMutation = useMutation({
@@ -106,20 +110,11 @@ export default function RequestDetailScreen() {
     );
   };
 
-  const handleCallWorkshop = () => {
-    const phone = assignment?.workshop?.phone;
-    if (phone) Linking.openURL(`tel:${String(phone).replace(/\s/g, '')}`);
-  };
-
   const handleOpenMaps = () => {
     if (!incident?.latitude || !incident?.longitude) return;
     const lat = Number(incident.latitude);
     const lng = Number(incident.longitude);
     Linking.openURL(`https://www.google.com/maps?q=${lat},${lng}`);
-  };
-
-  const handlePayment = () => {
-    if (assignment?.id) router.push(`/payment/${assignment.id}`);
   };
 
   if (!incidentId) {
@@ -168,9 +163,41 @@ export default function RequestDetailScreen() {
   const audioCount = evidences.filter((e) => e.evidence_type === 'audio').length;
   const history = Array.isArray(incident.status_history) ? incident.status_history : [];
 
+  const effectiveAssignment = assignment || incident?.assignment;
+
+  const paymentObj =
+    effectiveAssignment && typeof effectiveAssignment.payment === 'object'
+      ? effectiveAssignment.payment
+      : null;
+  const paymentStatus = paymentObj?.status;
+  const ratingInfo = effectiveAssignment?.rating || effectiveAssignment?.client_rating;
+
   const canCancel = ['pending', 'analyzing', 'waiting_workshop'].includes(incident.status);
   const showPayment =
-    incident.status === 'completed' && assignment?.id && assignment?.service_cost != null;
+    incident.status === 'completed' &&
+    effectiveAssignment?.id &&
+    effectiveAssignment?.service_cost != null &&
+    paymentStatus === 'pending';
+  const showRate =
+    incident.status === 'completed' &&
+    effectiveAssignment?.id &&
+    paymentStatus === 'client_paid' &&
+    !ratingInfo?.score;
+
+  const handleCallWorkshop = () => {
+    const phone = effectiveAssignment?.workshop?.phone;
+    if (phone) Linking.openURL(`tel:${String(phone).replace(/\s/g, '')}`);
+  };
+
+  const handlePayment = () => {
+    const aid = effectiveAssignment?.id;
+    if (aid) router.push(`/payment/${aid}`);
+  };
+
+  const handleRate = () => {
+    const aid = effectiveAssignment?.id;
+    if (aid) router.push(`/rate/${aid}`);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
@@ -270,43 +297,54 @@ export default function RequestDetailScreen() {
           </Card>
         ) : null}
 
-        {assignment?.workshop ? (
+        {effectiveAssignment?.workshop ? (
           <Card className="p-4 mb-4 bg-emerald-50 border-emerald-200">
             <Text className="text-dark-900 font-semibold mb-1">Taller asignado</Text>
             <View className="self-start bg-emerald-600 px-3 py-1 rounded-full mb-3">
               <Text className="text-white text-xs font-semibold">
-                {getAssignmentStatusLabel(assignment.status)}
+                {getAssignmentStatusLabel(effectiveAssignment.status)}
               </Text>
             </View>
-            <Text className="text-dark-900 font-bold text-lg mb-1">{assignment.workshop.name}</Text>
-            {assignment.distance_km != null && assignment.distance_km !== '' ? (
+            <Text className="text-dark-900 font-bold text-lg mb-1">{effectiveAssignment.workshop.name}</Text>
+            {effectiveAssignment.distance_km != null && effectiveAssignment.distance_km !== '' ? (
               <Text className="text-dark-600 text-sm mb-2">
-                Distancia aproximada: {formatDistance(Number(assignment.distance_km))}
+                Distancia aproximada: {formatDistance(Number(effectiveAssignment.distance_km))}
               </Text>
             ) : null}
-            {assignment.workshop.address ? (
-              <Text className="text-dark-700 text-sm mb-2">{assignment.workshop.address}</Text>
+            {effectiveAssignment.workshop.address ? (
+              <Text className="text-dark-700 text-sm mb-2">{effectiveAssignment.workshop.address}</Text>
             ) : null}
-            {assignment.workshop.phone ? (
-              <Text className="text-dark-700 text-sm mb-2">Tel. {assignment.workshop.phone}</Text>
+            {effectiveAssignment.workshop.phone ? (
+              <Text className="text-dark-700 text-sm mb-2">Tel. {effectiveAssignment.workshop.phone}</Text>
             ) : null}
-            {assignment.technician?.name ? (
+            {effectiveAssignment.technician?.name ? (
               <Text className="text-dark-600 text-sm mb-2">
-                Técnico: {assignment.technician.name}
-                {assignment.technician.phone ? ` (${assignment.technician.phone})` : ''}
+                Técnico: {effectiveAssignment.technician.name}
+                {effectiveAssignment.technician.phone ? ` (${effectiveAssignment.technician.phone})` : ''}
               </Text>
             ) : null}
-            {assignment.estimated_arrival_minutes != null ? (
+            {effectiveAssignment.estimated_arrival_minutes != null ? (
               <Text className="text-dark-600 text-sm mb-2">
-                Tiempo estimado de llegada: ~{assignment.estimated_arrival_minutes} min
+                Tiempo estimado de llegada: ~{effectiveAssignment.estimated_arrival_minutes} min
               </Text>
             ) : null}
-            {assignment.service_cost != null ? (
+            {effectiveAssignment.service_cost != null ? (
               <Text className="text-dark-900 font-bold text-base mb-3">
-                Costo del servicio: Bs. {assignment.service_cost}
+                Costo del servicio: Bs. {effectiveAssignment.service_cost}
               </Text>
             ) : null}
-            {assignment.workshop.phone ? (
+            {ratingInfo?.score ? (
+              <View className="mb-3 flex-row items-center">
+                <Ionicons name="star" size={20} color="#fbbf24" />
+                <Text className="text-dark-800 font-semibold ml-2">
+                  Calificación: {ratingInfo.score} estrellas
+                </Text>
+              </View>
+            ) : null}
+            {ratingInfo?.comment ? (
+              <Text className="text-dark-600 text-sm mb-3 italic">&ldquo;{ratingInfo.comment}&rdquo;</Text>
+            ) : null}
+            {effectiveAssignment.workshop.phone ? (
               <Button title="Llamar al taller" onPress={handleCallWorkshop} variant="primary" icon="call" full />
             ) : null}
           </Card>
@@ -395,6 +433,18 @@ export default function RequestDetailScreen() {
             variant="primary"
             size="lg"
             icon="card"
+            full
+            className="mb-4"
+          />
+        ) : null}
+
+        {showRate ? (
+          <Button
+            title="Calificar servicio"
+            onPress={handleRate}
+            variant="primary"
+            size="lg"
+            icon="star"
             full
             className="mb-4"
           />

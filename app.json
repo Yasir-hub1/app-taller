@@ -40,7 +40,14 @@
         "CAMERA",
         "RECORD_AUDIO",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ]
     },
     "plugins": [
@@ -81,7 +88,12 @@
       "router": {
         "origin": false
       },
-      "apiUrl": "http://192.168.100.175:8080"
-    }
+      "apiUrl": "http://192.168.100.175:8080",
+      "easProjectId": "f59886ef-554f-4721-b283-d328fcf64ac1",
+      "eas": {
+        "projectId": "f59886ef-554f-4721-b283-d328fcf64ac1"
+      }
+    },
+    "owner": "rister"
   }
 }

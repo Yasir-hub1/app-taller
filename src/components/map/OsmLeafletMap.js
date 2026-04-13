@@ -57,12 +57,29 @@ function buildMapHtml(cfg) {
           iconSize: [36, 36],
           iconAnchor: [18, 18]
         });
-        L.marker([w.lat, w.lng], { icon: icon }).addTo(map).on('click', function () {
+        var marker = L.marker([w.lat, w.lng], { icon: icon }).addTo(map);
+        if (w.name || w.distanceKm != null) {
+          marker.bindPopup(
+            '<b>' + (w.name || 'Taller') + '</b>' +
+            (w.distanceKm != null ? '<br/>' + Number(w.distanceKm).toFixed(1) + ' km' : '')
+          );
+        }
+        marker.on('click', function () {
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'workshop', id: w.id }));
           }
         });
       });
+
+      // Ajustar encuadre para incluir usuario y talleres visibles
+      if ((cfg.workshops || []).length > 0) {
+        var points = [[cfg.userLat, cfg.userLng]];
+        (cfg.workshops || []).forEach(function (w) {
+          points.push([w.lat, w.lng]);
+        });
+        var bounds = L.latLngBounds(points);
+        map.fitBounds(bounds.pad(0.2), { maxZoom: cfg.zoom });
+      }
     })();
   </script>
 </body>
@@ -90,8 +107,10 @@ export default function OsmLeafletMap({
       radiusMeters: circleRadiusMeters,
       workshops: workshops.map((w) => ({
         id: w.id,
-        lat: w.latitude,
-        lng: w.longitude,
+        lat: Number(w.latitude),
+        lng: Number(w.longitude),
+        name: w.name,
+        distanceKm: w.distance_km ?? w.distance ?? null,
       })),
     };
     return buildMapHtml(cfg);

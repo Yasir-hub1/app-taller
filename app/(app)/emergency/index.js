@@ -16,6 +16,7 @@ import { incidentsApi } from '../../../src/api/incidents.api';
 import { useIncidentStore } from '../../../src/store/incident.store';
 import { useLocation } from '../../../src/hooks/useLocation';
 import { formatApiError } from '../../../src/utils/apiErrors';
+import * as Location from 'expo-location';
 
 function roundCoord(n) {
   return Math.round(Number(n) * 1e7) / 1e7;
@@ -37,6 +38,7 @@ export default function EmergencyStartScreen() {
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
   /** Ubicación elegida manualmente en el mapa OSM (tiene prioridad sobre GPS / borrador del home) */
   const [manualLocation, setManualLocation] = useState(null);
+  const [resolvedAddress, setResolvedAddress] = useState('');
 
   const draftLatitude = useIncidentStore((state) => state.draftLatitude);
   const draftLongitude = useIncidentStore((state) => state.draftLongitude);
@@ -65,6 +67,39 @@ export default function EmergencyStartScreen() {
     draftCoords ||
     location || { latitude: -16.5, longitude: -68.15 };
 
+  useEffect(() => {
+    let mounted = true;
+    const currentLocation = effectiveLocation;
+    if (!currentLocation?.latitude || !currentLocation?.longitude) {
+      setResolvedAddress('');
+      return;
+    }
+
+    (async () => {
+      try {
+        const places = await Location.reverseGeocodeAsync({
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+        });
+        if (!mounted) return;
+        const p = places?.[0];
+        if (!p) {
+          setResolvedAddress('');
+          return;
+        }
+        const line = [p.street, p.streetNumber].filter(Boolean).join(' ');
+        const zone = [p.district, p.city].filter(Boolean).join(', ');
+        setResolvedAddress([line, zone].filter(Boolean).join(' · ') || '');
+      } catch {
+        if (mounted) setResolvedAddress('');
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [effectiveLocation]);
+
   const handleContinue = async () => {
     const vehicleId = parseInt(selectedVehicleId, 10);
     if (!selectedVehicleId || !Number.isFinite(vehicleId)) {
@@ -90,6 +125,7 @@ export default function EmergencyStartScreen() {
         latitude: roundCoord(currentLocation.latitude),
         longitude: roundCoord(currentLocation.longitude),
         description: description || '',
+        address_text: resolvedAddress || '',
       };
 
       const { data } = await incidentsApi.create(payload);
@@ -194,6 +230,11 @@ export default function EmergencyStartScreen() {
                   Sin ubicación. Usa el mapa o reintenta el GPS.
                 </Text>
               )}
+              {resolvedAddress ? (
+                <Text className="text-dark-600 text-xs mt-1">
+                  {resolvedAddress}
+                </Text>
+              ) : null}
             </View>
           </View>
           <View className="flex-row flex-wrap gap-2 mt-3">
