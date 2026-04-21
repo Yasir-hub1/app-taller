@@ -66,6 +66,15 @@ export default function IncidentCard({ incident, onPress }) {
               {incident.assignment.workshop?.name || 'Taller asignado'}
             </Text>
           </View>
+          {['assigned', 'in_progress'].includes(incident.status) &&
+          ['accepted', 'in_route', 'arrived', 'in_service'].includes(incident.assignment.status) ? (
+            <View className="flex-row items-center mt-2">
+              <Ionicons name="navigate" size={14} color="#059669" />
+              <Text className="text-emerald-800 text-xs ml-1.5 font-medium">
+                Mapa en vivo del técnico al abrir el detalle
+              </Text>
+            </View>
+          ) : null}
           {incident.assignment.rating?.score ? (
             <View className="flex-row items-center mt-2">
               <Ionicons name="star" size={16} color="#fbbf24" />

@@ -5,7 +5,7 @@ import { useAuthStore } from '../src/store/auth.store';
 import Loading from '../src/components/ui/Loading';
 
 export default function Index() {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, user } = useAuthStore();
 
   if (isLoading) {
     return (
@@ -24,6 +24,9 @@ export default function Index() {
   }
 
   if (isAuthenticated) {
+    if (user?.role === 'technician') {
+      return <Redirect href="/(technician)" />;
+    }
     return <Redirect href="/(app)/home" />;
   }
 

@@ -42,7 +42,8 @@ export default function LoginScreen() {
         text1: 'Bienvenido',
         text2: 'Sesión iniciada correctamente',
       });
-      router.replace('/(app)/home');
+      const role = useAuthStore.getState().user?.role;
+      router.replace(role === 'technician' ? '/(technician)' : '/(app)/home');
     } else {
       Toast.show({
         type: 'error',
@@ -112,11 +113,14 @@ export default function LoginScreen() {
             {/* Links adicionales */}
             <View className="mt-6 items-center">
               <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-                <Text className="text-dark-600 text-base">
-                  ¿No tienes cuenta?{' '}
-                  <Text className="text-primary-600 font-bold">Regístrate</Text>
+                <Text className="text-dark-600 text-base text-center">
+                  ¿Cliente nuevo?{' '}
+                  <Text className="text-primary-600 font-bold">Regístrate aquí</Text>
                 </Text>
               </TouchableOpacity>
+              <Text className="text-dark-500 text-xs text-center mt-3 px-4">
+                Personal de taller (técnicos): solo inicio de sesión, sin registro en la app.
+              </Text>
             </View>
           </View>
         </ScrollView>

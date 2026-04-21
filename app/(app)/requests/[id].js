@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -33,6 +33,7 @@ import {
   getStatusDescription,
   getAssignmentStatusLabel,
 } from '../../../src/utils/format';
+import ClientLiveTrackingBlock from '../../../src/components/incident/ClientLiveTrackingBlock';
 
 export default function RequestDetailScreen() {
   const { id: routeId } = useLocalSearchParams();
@@ -74,6 +75,14 @@ export default function RequestDetailScreen() {
       return 10000;
     },
   });
+
+  const effectiveAssignment = useMemo(() => {
+    const nested = incident?.assignment ?? null;
+    if (!assignment && !nested) return null;
+    if (!assignment) return nested;
+    if (!nested) return assignment;
+    return { ...nested, ...assignment };
+  }, [assignment, incident]);
 
   const cancelMutation = useMutation({
     mutationFn: () => incidentsApi.cancel(incidentId),
@@ -163,8 +172,6 @@ export default function RequestDetailScreen() {
   const audioCount = evidences.filter((e) => e.evidence_type === 'audio').length;
   const history = Array.isArray(incident.status_history) ? incident.status_history : [];
 
-  const effectiveAssignment = assignment || incident?.assignment;
-
   const paymentObj =
     effectiveAssignment && typeof effectiveAssignment.payment === 'object'
       ? effectiveAssignment.payment
@@ -201,7 +208,10 @@ export default function RequestDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        nestedScrollEnabled
+      >
         <View className="flex-row items-center justify-between mb-2">
           <Button title="← Volver" onPress={() => router.back()} variant="ghost" size="sm" />
           <Badge
@@ -244,6 +254,14 @@ export default function RequestDetailScreen() {
             {getStatusDescription(incident.status)}
           </Text>
         </Card>
+
+        <ClientLiveTrackingBlock
+          incidentId={incident.id}
+          incidentStatus={incident.status}
+          incidentLat={incident.latitude}
+          incidentLng={incident.longitude}
+          assignment={effectiveAssignment}
+        />
 
         {incident.description ? (
           <Card className="p-4 mb-4">

@@ -122,8 +122,12 @@ export default function RegisterScreen() {
             <Text className="text-3xl font-bold text-dark-900 mb-2">
               Crear Cuenta
             </Text>
-            <Text className="text-dark-600 text-base mb-8">
-              Completa tus datos para registrarte
+            <Text className="text-dark-600 text-base mb-2">
+              Completa tus datos para registrarte como cliente.
+            </Text>
+            <Text className="text-amber-800 text-sm mb-8 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              ¿Eres técnico de taller? No uses este formulario: tu cuenta la crea el administrador o el dueño
+              del taller. Inicia sesión desde la pantalla principal.
             </Text>
 
             {/* Formulario */}

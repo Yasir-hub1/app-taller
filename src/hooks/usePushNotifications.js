@@ -67,10 +67,38 @@ if (!isExpoGo) {
 function navigateFromPushData(data) {
   if (!data || typeof data !== 'object') return;
   const incidentId = data.incident_id ?? data.incidentId;
+  const assignmentId = data.assignment_id ?? data.assignmentId;
   const type = String(data.type || '');
 
   // Calificaciones (`new_rating`) van al dueño del taller (panel web / FCM del owner), no a la app cliente.
   if (type === 'new_rating') return;
+
+  if (type === 'technician_assignment' && assignmentId) {
+    try {
+      router.push(`/(technician)/assignment/${String(assignmentId)}`);
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+
+  if (type === 'technician_nearby' && incidentId) {
+    try {
+      router.push(`/requests/${incidentId}`);
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+
+  if (type === 'technician_in_route' && incidentId) {
+    try {
+      router.push(`/requests/${incidentId}`);
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
 
   if (incidentId) {
     if (

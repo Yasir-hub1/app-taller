@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,7 @@ import {
   getStatusDescription,
   getAssignmentStatusLabel,
 } from '../../../../src/utils/format';
+import ClientLiveTrackingBlock from '../../../../src/components/incident/ClientLiveTrackingBlock';
 
 function mediaUrl(fileField) {
   if (!fileField) return null;
@@ -115,6 +116,14 @@ export default function IncidentStatusScreen() {
     refetchInterval: 10000,
   });
 
+  const effectiveAssignment = useMemo(() => {
+    const nested = incident?.assignment ?? null;
+    if (!assignment && !nested) return null;
+    if (!assignment) return nested;
+    if (!nested) return assignment;
+    return { ...nested, ...assignment };
+  }, [assignment, incident]);
+
   const cancelMutation = useMutation({
     mutationFn: () => incidentsApi.cancel(incidentId),
     onSuccess: () => {
@@ -157,7 +166,7 @@ export default function IncidentStatusScreen() {
   };
 
   const handleCallWorkshop = () => {
-    const phone = assignment?.workshop?.phone;
+    const phone = effectiveAssignment?.workshop?.phone;
     if (phone) {
       Linking.openURL(`tel:${phone.replace(/\s/g, '')}`);
     }
@@ -171,8 +180,8 @@ export default function IncidentStatusScreen() {
   };
 
   const handlePayment = () => {
-    if (assignment?.id) {
-      router.push(`/payment/${assignment.id}`);
+    if (effectiveAssignment?.id) {
+      router.push(`/payment/${effectiveAssignment.id}`);
     }
   };
 
@@ -247,11 +256,16 @@ export default function IncidentStatusScreen() {
 
   const canCancel = ['pending', 'analyzing', 'waiting_workshop'].includes(incident.status);
   const showPayment =
-    incident.status === 'completed' && assignment?.id && assignment?.service_cost != null;
+    incident.status === 'completed' &&
+    effectiveAssignment?.id &&
+    effectiveAssignment?.service_cost != null;
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        nestedScrollEnabled
+      >
         <View className="flex-row items-center justify-between mb-2">
           <Button
             title="← Volver"
@@ -296,6 +310,14 @@ export default function IncidentStatusScreen() {
             {getStatusDescription(incident.status)}
           </Text>
         </Card>
+
+        <ClientLiveTrackingBlock
+          incidentId={incident.id}
+          incidentStatus={incident.status}
+          incidentLat={incident.latitude}
+          incidentLng={incident.longitude}
+          assignment={effectiveAssignment}
+        />
 
         {incident.status === 'analyzing' ? (
           <Card className="p-4 mb-4 bg-violet-50 border-violet-200">
@@ -374,12 +396,12 @@ export default function IncidentStatusScreen() {
           </Card>
         ) : null}
 
-        {assignment?.workshop ? (
+        {effectiveAssignment?.workshop ? (
           <Card className="p-4 mb-4 bg-emerald-50 border-emerald-200">
             <Text className="text-dark-900 font-semibold mb-1">Taller asignado</Text>
             <View className="self-start bg-emerald-600 px-3 py-1 rounded-full mb-3">
               <Text className="text-white text-xs font-semibold">
-                {getAssignmentStatusLabel(assignment.status)}
+                {getAssignmentStatusLabel(effectiveAssignment.status)}
               </Text>
             </View>
             <View className="flex-row items-start mb-3">
@@ -388,44 +410,48 @@ export default function IncidentStatusScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-dark-900 font-bold text-base">
-                  {assignment.workshop.name}
+                  {effectiveAssignment.workshop.name}
                 </Text>
-                {assignment.distance_km != null && assignment.distance_km !== '' ? (
+                {effectiveAssignment.distance_km != null && effectiveAssignment.distance_km !== '' ? (
                   <View className="flex-row items-center mt-1">
                     <Ionicons name="navigate" size={14} color="#64748b" />
                     <Text className="text-dark-600 text-sm ml-1">
-                      {formatDistance(Number(assignment.distance_km))}
+                      {formatDistance(Number(effectiveAssignment.distance_km))}
                     </Text>
                   </View>
                 ) : null}
               </View>
             </View>
-            {assignment.workshop.address ? (
-              <Text className="text-dark-600 text-sm mb-2">{assignment.workshop.address}</Text>
+            {effectiveAssignment.workshop.address ? (
+              <Text className="text-dark-600 text-sm mb-2">{effectiveAssignment.workshop.address}</Text>
             ) : null}
-            {assignment.workshop.phone ? (
+            {effectiveAssignment.workshop.phone ? (
               <View className="flex-row items-center mb-2">
                 <Ionicons name="call" size={16} color="#64748b" />
-                <Text className="text-dark-700 ml-2">{assignment.workshop.phone}</Text>
+                <Text className="text-dark-700 ml-2">{effectiveAssignment.workshop.phone}</Text>
               </View>
             ) : null}
-            {assignment.technician?.name ? (
+            {effectiveAssignment.technician?.name ? (
               <Text className="text-dark-600 text-sm mb-3">
-                Técnico: {assignment.technician.name}
-                {assignment.technician.phone ? ` · ${assignment.technician.phone}` : ''}
+                Técnico: {effectiveAssignment.technician.name}
+                {effectiveAssignment.technician.phone ? ` · ${effectiveAssignment.technician.phone}` : ''}
+              </Text>
+            ) : effectiveAssignment.technician_name ? (
+              <Text className="text-dark-600 text-sm mb-3">
+                Técnico: {effectiveAssignment.technician_name}
               </Text>
             ) : null}
-            {assignment.estimated_arrival_minutes != null ? (
+            {effectiveAssignment.estimated_arrival_minutes != null ? (
               <Text className="text-dark-600 text-sm mb-3">
-                ETA aproximado: {assignment.estimated_arrival_minutes} min
+                ETA aproximado: {effectiveAssignment.estimated_arrival_minutes} min
               </Text>
             ) : null}
-            {assignment.service_cost != null ? (
+            {effectiveAssignment.service_cost != null ? (
               <Text className="text-dark-800 font-semibold text-sm mb-3">
-                Costo del servicio: Bs. {assignment.service_cost}
+                Costo del servicio: Bs. {effectiveAssignment.service_cost}
               </Text>
             ) : null}
-            {assignment.workshop.phone ? (
+            {effectiveAssignment.workshop.phone ? (
               <Button
                 title="Llamar al taller"
                 onPress={handleCallWorkshop}

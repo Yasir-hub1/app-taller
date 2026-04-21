@@ -5,7 +5,7 @@ import { useAuthStore } from '../../src/store/auth.store';
 import Loading from '../../src/components/ui/Loading';
 
 export default function AppLayout() {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, user } = useAuthStore();
   const insets = useSafeAreaInsets();
 
   if (isLoading) {
@@ -14,6 +14,10 @@ export default function AppLayout() {
 
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
+  }
+
+  if (user?.role === 'technician') {
+    return <Redirect href="/(technician)" />;
   }
 
   const tabPadBottom = Math.max(insets.bottom, 8);

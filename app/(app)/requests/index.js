@@ -10,6 +10,10 @@ import Loading from '../../../src/components/ui/Loading';
 import Button from '../../../src/components/ui/Button';
 import { normalizeListResponse } from '../../../src/utils/apiList';
 
+/** Coinciden con IncidentStatus en Django (apps.incidents.models). */
+const STATUS_ACTIVE =
+  'pending,analyzing,waiting_workshop,assigned,in_progress';
+
 export default function RequestsScreen() {
   const [filter, setFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -17,7 +21,15 @@ export default function RequestsScreen() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['incidents', filter],
     queryFn: async () => {
-      const params = filter !== 'all' ? { status: filter } : {};
+      const statusByFilter = {
+        active: STATUS_ACTIVE,
+        completed: 'completed',
+        cancelled: 'cancelled',
+      };
+      const params =
+        filter !== 'all' && statusByFilter[filter]
+          ? { status: statusByFilter[filter] }
+          : {};
       const { data } = await incidentsApi.getAll(params);
       return normalizeListResponse(data);
     },
@@ -33,7 +45,7 @@ export default function RequestsScreen() {
 
   const filters = [
     { value: 'all', label: 'Todos' },
-    { value: 'pending,analyzing,waiting_workshop,assigned,in_progress', label: 'Activos' },
+    { value: 'active', label: 'Activos' },
     { value: 'completed', label: 'Completados' },
     { value: 'cancelled', label: 'Cancelados' },
   ];
