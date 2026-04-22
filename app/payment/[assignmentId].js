@@ -210,7 +210,7 @@ export default function PaymentScreen() {
           <View className="flex-row justify-between mb-3">
             <Text className="text-dark-600">Costo del servicio</Text>
             <Text className="text-dark-900 font-semibold">
-              ${totalAmount.toFixed(2)} USD
+              ${totalAmount.toFixed(2)} Bs
             </Text>
           </View>
 
@@ -225,7 +225,7 @@ export default function PaymentScreen() {
             <View className="flex-row justify-between">
               <Text className="text-dark-900 font-bold text-lg">Total</Text>
               <Text className="text-primary-600 font-bold text-xl">
-                ${finalAmount.toFixed(2)} USD
+                ${finalAmount.toFixed(2)} Bs
               </Text>
             </View>
           </View>
@@ -281,7 +281,7 @@ export default function PaymentScreen() {
 
           <View style={{ marginBottom: Platform.OS === 'ios' ? 20 : 10 }}>
             <Button
-              title={`Pagar $${finalAmount.toFixed(2)} USD`}
+              title={`Pagar $${finalAmount.toFixed(2)} Bs`}
               onPress={handlePayment}
               loading={processing}
               disabled={!cardComplete || processing}

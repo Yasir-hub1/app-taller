@@ -67,15 +67,15 @@ export default function LoginScreen() {
             {/* Logo y título */}
             <View className="items-center mb-10">
               <Image
-                source={require('../../assets/icon.png')}
-                style={{ width: 100, height: 100 }}
+                source={require('../../assets/logo1.png')}
+                style={{ width: 140, height: 140 }}
                 resizeMode="contain"
               />
               <Text className="text-3xl font-bold text-dark-900 mt-4">
                 Bienvenido
               </Text>
               <Text className="text-dark-600 text-base mt-2">
-                Inicia sesión para continuar
+                Inicia sesión para continuar en AhoringaLlego
               </Text>
             </View>
 
