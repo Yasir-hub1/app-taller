@@ -3,10 +3,10 @@ import Constants from 'expo-constants';
 const ENV = {
   dev: {
     /** Ajusta a la IP de tu PC en la LAN (emulador Android → suele ser http://10.0.2.2:PUERTO) */
-    apiUrl: 'http://192.168.100.200:8080',
+    apiUrl: 'https://ws-taller.smartcondominio.lat',
   },
   prod: {
-    apiUrl: 'http://192.168.100.200:8080',
+    apiUrl: 'https://ws-taller.smartcondominio.lat',
   },
 };
 

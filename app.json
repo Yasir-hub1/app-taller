@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "AhoringaLlego",
-    "slug": "ahoringa-llego",
+    "slug": "emergencias-vehiculares",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo1.png",
@@ -88,7 +88,7 @@
       "router": {
         "origin": false
       },
-      "apiUrl": "http://192.168.100.200:8080",
+      "apiUrl": "https://ws-taller.smartcondominio.lat",
       "easProjectId": "f59886ef-554f-4721-b283-d328fcf64ac1",
       "eas": {
         "projectId": "f59886ef-554f-4721-b283-d328fcf64ac1"
