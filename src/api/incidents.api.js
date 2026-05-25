@@ -26,4 +26,21 @@ export const incidentsApi = {
 
   getEvidences: (incidentId) =>
     client.get(`${APP}/incidents/${incidentId}/evidences/`),
+
+  getOfferedWorkshops: (incidentId) =>
+    client.get(`${APP}/incidents/${incidentId}/offered-workshops/`),
+
+  selectWorkshop: (incidentId, assignmentId) =>
+    client.post(`${APP}/incidents/${incidentId}/select-workshop/`, {
+      assignment_id: assignmentId,
+    }),
+
+  getQuotes: (incidentId) =>
+    client.get(`${APP}/incidents/${incidentId}/quotes/`),
+
+  respondQuote: (incidentId, quoteId, action) =>
+    client.post(`${APP}/incidents/${incidentId}/quotes/respond/`, {
+      quote_id: quoteId,
+      action,
+    }),
 };

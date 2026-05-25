@@ -7,6 +7,9 @@
     "icon": "./assets/logo1.png",
     "scheme": "emergenciasveh",
     "userInterfaceStyle": "automatic",
+    "web": {
+      "bundler": "metro"
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -27,7 +30,6 @@
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
-      "usesCleartextTraffic": true,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo1.png",

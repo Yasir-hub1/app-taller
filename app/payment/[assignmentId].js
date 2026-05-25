@@ -46,8 +46,18 @@ export default function PaymentScreen() {
     setProcessing(true);
 
     try {
-      // 1) PaymentIntent en backend (client_secret para confirmar en el dispositivo)
-      const { data: intentData } = await createPaymentIntentMutation.mutateAsync(assignmentId);
+      // Paralelo: refrescar asignación y crear PaymentIntent al mismo tiempo
+      const [intentResponse] = await Promise.all([
+        createPaymentIntentMutation.mutateAsync(assignmentId),
+        queryClient.fetchQuery({
+          queryKey: ['assignment', assignmentId],
+          queryFn: async () => {
+            const { data } = await assignmentsApi.getById(assignmentId);
+            return data;
+          },
+        }),
+      ]);
+      const intentData = intentResponse.data;
 
       if (!intentData.client_secret) {
         throw new Error('No se pudo crear el intento de pago');

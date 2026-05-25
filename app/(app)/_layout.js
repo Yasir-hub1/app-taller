@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/store/auth.store';
 import Loading from '../../src/components/ui/Loading';
+import OfflineSyncProvider from '../../src/components/offline/OfflineSyncProvider';
 
 export default function AppLayout() {
   const { isAuthenticated, isLoading, user } = useAuthStore();
@@ -23,6 +24,7 @@ export default function AppLayout() {
   const tabPadBottom = Math.max(insets.bottom, 8);
 
   return (
+    <OfflineSyncProvider>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -96,5 +98,6 @@ export default function AppLayout() {
       <Tabs.Screen name="profile/edit" options={{ href: null }} />
       <Tabs.Screen name="profile/change-password" options={{ href: null }} />
     </Tabs>
+    </OfflineSyncProvider>
   );
 }

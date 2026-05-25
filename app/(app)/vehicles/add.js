@@ -128,7 +128,7 @@ export default function AddVehicleScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       quality: 0.85,
       allowsEditing: true,
       aspect: [4, 3],
@@ -149,7 +149,7 @@ export default function AddVehicleScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       quality: 0.85,
       allowsEditing: true,
       aspect: [4, 3],

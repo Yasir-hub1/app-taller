@@ -22,7 +22,9 @@ import { incidentsApi } from '../../../../src/api/incidents.api';
 import { useIncidentStore } from '../../../../src/store/incident.store';
 import { API_BASE_URL } from '../../../../src/constants/api';
 import { notificationsApi } from '../../../../src/api/notifications.api';
-import { resolveIncidentId } from '../../../../src/utils/incidentRoute';
+import { resolveIncidentId, isLocalIncidentId } from '../../../../src/utils/incidentRoute';
+import PendingIncidentStatus from '../../../../src/components/incident/PendingIncidentStatus';
+import IncidentQuotesWorkshops from '../../../../src/components/incident/IncidentQuotesWorkshops';
 import {
   formatRelativeTime,
   formatDate,
@@ -49,6 +51,8 @@ export default function IncidentStatusScreen() {
   const activeIncidentId = useIncidentStore((s) => s.activeIncidentId);
   const activeIncident = useIncidentStore((s) => s.activeIncident);
   const incidentId = resolveIncidentId(routeId, activeIncidentId, activeIncident);
+  const isLocal = isLocalIncidentId(incidentId);
+  const localClientRequestId = isLocal ? incidentId.replace(/^local:/, '') : null;
 
   const queryClient = useQueryClient();
   const setActiveIncident = useIncidentStore((state) => state.setActiveIncident);
@@ -58,7 +62,7 @@ export default function IncidentStatusScreen() {
     let cancelled = false;
 
     const connectIncidentStream = async () => {
-      if (!incidentId) return;
+      if (!incidentId || isLocal) return;
 
       try {
         const streamUrl = await notificationsApi.getIncidentStreamUrl(incidentId);
@@ -89,7 +93,7 @@ export default function IncidentStatusScreen() {
         // ignore
       }
     };
-  }, [incidentId, queryClient]);
+  }, [incidentId, isLocal, queryClient]);
 
   const { data: incident, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['incident', incidentId],
@@ -97,7 +101,7 @@ export default function IncidentStatusScreen() {
       const { data } = await incidentsApi.getById(incidentId);
       return data;
     },
-    enabled: !!incidentId,
+    enabled: !!incidentId && !isLocal,
     refetchInterval: 8000,
   });
 
@@ -112,7 +116,7 @@ export default function IncidentStatusScreen() {
         throw e;
       }
     },
-    enabled: !!incidentId,
+    enabled: !!incidentId && !isLocal,
     refetchInterval: 10000,
   });
 
@@ -202,6 +206,18 @@ export default function IncidentStatusScreen() {
           size="md"
           className="mt-6"
         />
+      </SafeAreaView>
+    );
+  }
+
+  if (isLocal && localClientRequestId) {
+    return (
+      <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+        <ScrollView contentContainerStyle={{ padding: 16 }}>
+          <Button title="← Volver" onPress={() => router.back()} variant="ghost" size="sm" />
+          <Text className="text-dark-900 font-bold text-2xl mt-2 mb-4">Emergencia (local)</Text>
+          <PendingIncidentStatus localClientRequestId={localClientRequestId} />
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -310,6 +326,8 @@ export default function IncidentStatusScreen() {
             {getStatusDescription(incident.status)}
           </Text>
         </Card>
+
+        <IncidentQuotesWorkshops incidentId={String(incident.id)} />
 
         <ClientLiveTrackingBlock
           incidentId={incident.id}

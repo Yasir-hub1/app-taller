@@ -28,8 +28,11 @@ export async function postMultipart(relativePath, formData) {
     throw e;
   }
 
-  const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
-  const url = `${API_BASE_URL.replace(/\/$/, '')}${path}`;
+  const url = /^https?:\/\//i.test(relativePath)
+    ? relativePath
+    : `${API_BASE_URL.replace(/\/$/, '')}${
+        relativePath.startsWith('/') ? relativePath : `/${relativePath}`
+      }`;
 
   const exec = async (token) => {
     const controller = new AbortController();

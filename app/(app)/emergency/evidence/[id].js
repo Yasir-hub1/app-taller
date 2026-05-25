@@ -16,7 +16,10 @@ import Card from '../../../../src/components/ui/Card';
 import { incidentsApi } from '../../../../src/api/incidents.api';
 import { useIncidentStore } from '../../../../src/store/incident.store';
 import { formatApiError } from '../../../../src/utils/apiErrors';
-import { resolveIncidentId } from '../../../../src/utils/incidentRoute';
+import { resolveIncidentId, isLocalIncidentId } from '../../../../src/utils/incidentRoute';
+import { useNetworkStatus } from '../../../../src/hooks/useNetworkStatus';
+import { enqueueEvidenceUpload } from '../../../../src/offline/queue';
+import { getServerIdForLocal } from '../../../../src/offline/queue';
 
 function extFromUri(uri) {
   const base = (uri || '').split('/').pop() || '';
@@ -91,6 +94,8 @@ export default function EvidenceScreen() {
   const activeIncidentId = useIncidentStore((s) => s.activeIncidentId);
   const activeIncident = useIncidentStore((s) => s.activeIncident);
   const incidentId = resolveIncidentId(routeId, activeIncidentId, activeIncident);
+  const { online } = useNetworkStatus();
+  const localIncident = isLocalIncidentId(incidentId);
 
   const [photos, setPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -110,7 +115,7 @@ export default function EvidenceScreen() {
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       quality: 0.7,
       allowsEditing: true,
       aspect: [4, 3],
@@ -129,7 +134,7 @@ export default function EvidenceScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       quality: 0.7,
       allowsMultipleSelection: true,
       allowsEditing: false,
@@ -183,26 +188,47 @@ export default function EvidenceScreen() {
 
     setUploading(true);
 
-    try {
-      const formData = new FormData();
-
-      photos.forEach((photo, index) => {
+    const formMeta = {
+      photos: photos.map((photo, index) => {
         const ext = extFromUri(photo.uri);
-        formData.append('photos', {
+        return {
           uri: photo.uri,
           name: `photo_${index}.${ext || 'jpg'}`,
           type: imageMime(ext),
-        });
-      });
+        };
+      }),
+      audio: audioUri
+        ? {
+            uri: audioUri,
+            name: `audio.${extFromUri(audioUri) || 'm4a'}`,
+            type: audioMime(extFromUri(audioUri)),
+          }
+        : null,
+    };
 
-      if (audioUri) {
-        const ext = extFromUri(audioUri);
-        formData.append('audio', {
-          uri: audioUri,
-          name: `audio.${ext || 'm4a'}`,
-          type: audioMime(ext),
+    const goStatus = (id) => router.replace(`/emergency/status/${encodeURIComponent(id)}`);
+
+    try {
+      if (localIncident || !online) {
+        const localKey = localIncident ? incidentId.replace(/^local:/, '') : incidentId;
+        const serverId = localIncident ? await getServerIdForLocal(localKey) : incidentId;
+        await enqueueEvidenceUpload({
+          localIncidentId: localKey,
+          serverIncidentId: serverId,
+          formMeta,
         });
+        Toast.show({
+          type: 'info',
+          text1: localIncident ? 'Evidencia guardada' : 'Sin conexión',
+          text2: 'Se subirá al sincronizar el incidente',
+        });
+        goStatus(incidentId);
+        return;
       }
+
+      const formData = new FormData();
+      formMeta.photos.forEach((p) => formData.append('photos', p));
+      if (formMeta.audio) formData.append('audio', formMeta.audio);
 
       await incidentsApi.uploadEvidence(incidentId, formData);
 
@@ -212,7 +238,7 @@ export default function EvidenceScreen() {
         text2: 'Tu incidente está siendo analizado',
       });
 
-      router.replace(`/emergency/status/${incidentId}`);
+      goStatus(incidentId);
     } catch (error) {
       const aborted = error?.name === 'AbortError';
       const msg = typeof error?.message === 'string' ? error.message : '';
@@ -222,12 +248,29 @@ export default function EvidenceScreen() {
         msg === 'Network Error' ||
         msg.includes('Network request failed') ||
         !error?.response;
+      if (isNetwork) {
+        try {
+          const localKey = localIncident ? incidentId.replace(/^local:/, '') : incidentId;
+          await enqueueEvidenceUpload({
+            localIncidentId: localKey,
+            serverIncidentId: localIncident ? await getServerIdForLocal(localKey) : incidentId,
+            formMeta,
+          });
+          Toast.show({
+            type: 'info',
+            text1: 'Evidencia en cola',
+            text2: 'Se enviará cuando haya conexión',
+          });
+          goStatus(incidentId);
+          return;
+        } catch {
+          /* fallthrough */
+        }
+      }
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: isNetwork
-          ? 'No se pudo conectar al servidor. Revisa la IP (EXPO_PUBLIC_API_URL / extra.apiUrl), Wi‑Fi y que el backend escuche en 0.0.0.0.'
-          : formatApiError(error.response?.data) || 'Error al subir evidencias',
+        text2: formatApiError(error.response?.data) || 'Error al subir evidencias',
       });
     } finally {
       setUploading(false);

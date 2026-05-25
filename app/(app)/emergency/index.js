@@ -17,6 +17,9 @@ import { useIncidentStore } from '../../../src/store/incident.store';
 import { useLocation } from '../../../src/hooks/useLocation';
 import { formatApiError } from '../../../src/utils/apiErrors';
 import * as Location from 'expo-location';
+import { useNetworkStatus } from '../../../src/hooks/useNetworkStatus';
+import { enqueueIncidentCreate } from '../../../src/offline/queue';
+import { toLocalIncidentId } from '../../../src/utils/incidentRoute';
 
 function roundCoord(n) {
   return Math.round(Number(n) * 1e7) / 1e7;
@@ -42,6 +45,7 @@ export default function EmergencyStartScreen() {
 
   const draftLatitude = useIncidentStore((state) => state.draftLatitude);
   const draftLongitude = useIncidentStore((state) => state.draftLongitude);
+  const { online } = useNetworkStatus();
 
   // Obtener vehículos del usuario
   const { data: vehiclesData, isLoading: loadingVehicles } = useQuery({
@@ -119,14 +123,40 @@ export default function EmergencyStartScreen() {
 
     setLoading(true);
 
+    const payload = {
+      vehicle: vehicleId,
+      latitude: roundCoord(currentLocation.latitude),
+      longitude: roundCoord(currentLocation.longitude),
+      description: description || '',
+      address_text: resolvedAddress || '',
+    };
+
+    useIncidentStore.getState().setDraft({
+      draftVehicleId: vehicleId,
+      draftLatitude: currentLocation.latitude,
+      draftLongitude: currentLocation.longitude,
+      draftDescription: description,
+    });
+
     try {
-      const payload = {
-        vehicle: vehicleId,
-        latitude: roundCoord(currentLocation.latitude),
-        longitude: roundCoord(currentLocation.longitude),
-        description: description || '',
-        address_text: resolvedAddress || '',
-      };
+      if (!online) {
+        const item = await enqueueIncidentCreate(payload);
+        const localRouteId = toLocalIncidentId(item.clientRequestId);
+        useIncidentStore.getState().setActiveIncident({
+          id: localRouteId,
+          localId: item.clientRequestId,
+          syncStatus: 'pending',
+          offline: true,
+          ...payload,
+        });
+        Toast.show({
+          type: 'info',
+          text1: 'Guardado sin conexión',
+          text2: 'Se enviará automáticamente cuando vuelva internet',
+        });
+        router.push(`/emergency/evidence/${encodeURIComponent(localRouteId)}`);
+        return;
+      }
 
       const { data } = await incidentsApi.create(payload);
       const incidentId = data?.id ?? data?.pk;
@@ -140,14 +170,7 @@ export default function EmergencyStartScreen() {
         return;
       }
 
-      useIncidentStore.getState().setDraft({
-        draftVehicleId: vehicleId,
-        draftLatitude: currentLocation.latitude,
-        draftLongitude: currentLocation.longitude,
-        draftDescription: description,
-      });
-
-      useIncidentStore.getState().setActiveIncident({ ...data, id: incidentId });
+      useIncidentStore.getState().setActiveIncident({ ...data, id: incidentId, syncStatus: 'synced' });
 
       Toast.show({
         type: 'success',
@@ -157,6 +180,32 @@ export default function EmergencyStartScreen() {
 
       router.push(`/emergency/evidence/${incidentId}`);
     } catch (error) {
+      const isNetwork =
+        !error?.response ||
+        error?.code === 'ERR_NETWORK' ||
+        (error?.message || '').includes('Network');
+      if (isNetwork) {
+        try {
+          const item = await enqueueIncidentCreate(payload);
+          const localRouteId = toLocalIncidentId(item.clientRequestId);
+          useIncidentStore.getState().setActiveIncident({
+            id: localRouteId,
+            localId: item.clientRequestId,
+            syncStatus: 'pending',
+            offline: true,
+            ...payload,
+          });
+          Toast.show({
+            type: 'info',
+            text1: 'Sin conexión — guardado localmente',
+            text2: 'Sincronizaremos tu emergencia al recuperar la red',
+          });
+          router.push(`/emergency/evidence/${encodeURIComponent(localRouteId)}`);
+          return;
+        } catch {
+          /* fallthrough */
+        }
+      }
       Toast.show({
         type: 'error',
         text1: 'Error',
