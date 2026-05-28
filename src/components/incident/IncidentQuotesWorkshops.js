@@ -73,8 +73,18 @@ export default function IncidentQuotesWorkshops({ incidentId }) {
             >
               <Text className="text-dark-900 font-semibold">{w.workshop_name}</Text>
               <Text className="text-dark-600 text-xs">
-                {w.distance_km ? `${w.distance_km} km` : ''} · ★ {w.rating_avg}
+                {w.distance_km ? `${w.distance_km} km` : 'Distancia no disponible'} · ★ {w.rating_avg}
               </Text>
+              {w.ai_estimated_price ? (
+                <Text className="text-dark-800 text-sm mt-1">
+                  Precio estimado IA: Bs. {w.ai_estimated_price}
+                </Text>
+              ) : null}
+              {w.estimated_arrival_minutes != null ? (
+                <Text className="text-dark-600 text-xs mt-1">
+                  Llegada estimada: {w.estimated_arrival_minutes} min
+                </Text>
+              ) : null}
               {w.client_selected ? (
                 <Text className="text-green-700 text-xs mt-1 font-semibold">Tu selección</Text>
               ) : (

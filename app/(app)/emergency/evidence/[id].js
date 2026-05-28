@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
+import { pickImageFromLibrary, takeImageFromCamera } from '../../../../src/utils/imagePicker';
 import Toast from 'react-native-toast-message';
 import {
   useAudioPlayer,
@@ -108,39 +108,31 @@ export default function EvidenceScreen() {
   } = useAudioRecorder();
 
   const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu cámara para tomar fotos.');
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
+    const result = await takeImageFromCamera({
       quality: 0.7,
       allowsEditing: true,
       aspect: [4, 3],
     });
-
-    if (!result.canceled) {
+    if (result.permissionDenied) {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu cámara para tomar fotos.');
+      return;
+    }
+    if (!result.canceled && result.assets?.[0]) {
       setPhotos([...photos, result.assets[0]]);
     }
   };
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería para seleccionar fotos.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
+    const result = await pickImageFromLibrary({
       quality: 0.7,
       allowsMultipleSelection: true,
       allowsEditing: false,
     });
-
-    if (!result.canceled) {
+    if (result.permissionDenied) {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería para seleccionar fotos.');
+      return;
+    }
+    if (!result.canceled && result.assets?.length) {
       setPhotos([...photos, ...result.assets]);
     }
   };

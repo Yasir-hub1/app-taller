@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
-import * as ImagePicker from 'expo-image-picker';
+import { pickImageFromLibrary, takeImageFromCamera } from '../../../src/utils/imagePicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
@@ -118,8 +118,11 @@ export default function AddVehicleScreen() {
   };
 
   const pickVehiclePhoto = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
+    const result = await pickImageFromLibrary({
+      allowsEditing: true,
+      aspect: [4, 3],
+    });
+    if (result.permissionDenied) {
       Toast.show({
         type: 'error',
         text1: 'Permiso',
@@ -127,20 +130,17 @@ export default function AddVehicleScreen() {
       });
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
-      quality: 0.85,
-      allowsEditing: true,
-      aspect: [4, 3],
-    });
-    if (!result.canceled && result.assets[0]) {
+    if (!result.canceled && result.assets?.[0]) {
       updateField('photoUri', result.assets[0].uri);
     }
   };
 
   const takeVehiclePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
+    const result = await takeImageFromCamera({
+      allowsEditing: true,
+      aspect: [4, 3],
+    });
+    if (result.permissionDenied) {
       Toast.show({
         type: 'error',
         text1: 'Permiso',
@@ -148,13 +148,7 @@ export default function AddVehicleScreen() {
       });
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
-      quality: 0.85,
-      allowsEditing: true,
-      aspect: [4, 3],
-    });
-    if (!result.canceled && result.assets[0]) {
+    if (!result.canceled && result.assets?.[0]) {
       updateField('photoUri', result.assets[0].uri);
     }
   };

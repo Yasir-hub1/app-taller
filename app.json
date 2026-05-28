@@ -62,6 +62,13 @@
         }
       ],
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Necesitamos acceso a tus fotos para adjuntar imágenes al reporte.",
+          "cameraPermission": "Necesitamos la cámara para fotografiar el daño del vehículo."
+        }
+      ],
+      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Necesitamos tu ubicación para encontrar talleres cercanos."
