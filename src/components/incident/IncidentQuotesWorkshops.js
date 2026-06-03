@@ -7,29 +7,62 @@ import Button from '../ui/Button';
 import { incidentsApi } from '../../api/incidents.api';
 import { isLocalIncidentId } from '../../utils/incidentRoute';
 
-export default function IncidentQuotesWorkshops({ incidentId }) {
+const EMPTY_HINT =
+  'Debe haber talleres verificados cerca (GPS del incidente), con suscripción activa, técnico disponible y dentro de su radio. Si el tipo de emergencia es motor/batería, el taller debe ofrecer ese servicio o «general» en su perfil.';
+
+export default function IncidentQuotesWorkshops({ incidentId, incidentStatus }) {
   const queryClient = useQueryClient();
   const [selectingId, setSelectingId] = useState(null);
   const enabled = !!incidentId && !isLocalIncidentId(incidentId);
+  const canSearch = incidentStatus === 'waiting_workshop';
 
-  const { data: workshops = [] } = useQuery({
+  const { data: workshops = [], isFetching } = useQuery({
     queryKey: ['offered-workshops', incidentId],
     queryFn: async () => {
       const { data } = await incidentsApi.getOfferedWorkshops(incidentId);
-      return data;
+      return Array.isArray(data) ? data : [];
     },
     enabled,
-    refetchInterval: 15000,
+    refetchInterval: canSearch ? 12000 : false,
   });
 
   const { data: quotes = [] } = useQuery({
     queryKey: ['incident-quotes', incidentId],
     queryFn: async () => {
       const { data } = await incidentsApi.getQuotes(incidentId);
-      return data;
+      return Array.isArray(data) ? data : [];
     },
     enabled,
     refetchInterval: 15000,
+  });
+
+  const refreshMutation = useMutation({
+    mutationFn: () => incidentsApi.refreshWorkshopOffers(incidentId),
+    onSuccess: (res) => {
+      const count = res.data?.offered_count ?? 0;
+      queryClient.invalidateQueries({ queryKey: ['offered-workshops', incidentId] });
+      Toast.show({
+        type: count > 0 ? 'success' : 'info',
+        text1: count > 0 ? 'Talleres encontrados' : 'Sin talleres por ahora',
+        text2:
+          count > 0
+            ? `${count} taller(es) pueden atender tu solicitud`
+            : 'Revisa que haya talleres verificados cerca con técnicos disponibles',
+      });
+    },
+    onError: (e) => {
+      const status = e.response?.status;
+      const msg =
+        e.response?.data?.error ||
+        (status === 404
+          ? 'Reinicia el servidor backend (falta la ruta refresh-workshop-offers)'
+          : 'Intenta de nuevo');
+      Toast.show({
+        type: 'error',
+        text1: 'No se pudo buscar',
+        text2: msg,
+      });
+    },
   });
 
   const selectMutation = useMutation({
@@ -60,11 +93,25 @@ export default function IncidentQuotesWorkshops({ incidentId }) {
 
   return (
     <View className="mb-4">
+      {canSearch && workshops.length === 0 ? (
+        <Card className="p-4 mb-3 bg-slate-50 border-slate-200">
+          <Text className="text-dark-900 font-bold text-base mb-2">Buscando talleres</Text>
+          <Text className="text-dark-600 text-xs leading-5 mb-3">{EMPTY_HINT}</Text>
+          <Button
+            title={isFetching || refreshMutation.isPending ? 'Buscando…' : 'Volver a buscar talleres'}
+            variant="outline"
+            size="sm"
+            loading={refreshMutation.isPending}
+            onPress={() => refreshMutation.mutate()}
+          />
+        </Card>
+      ) : null}
+
       {workshops.length > 0 ? (
         <Card className="p-4 mb-3">
           <Text className="text-dark-900 font-bold text-base mb-2">Elegir taller</Text>
           <Text className="text-dark-600 text-xs mb-3">
-            Talleres que pueden atender tu emergencia (cotización y tiempo de reparación).
+            Talleres que pueden atender tu emergencia.
           </Text>
           {workshops.map((w) => (
             <View

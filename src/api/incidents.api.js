@@ -30,6 +30,9 @@ export const incidentsApi = {
   getOfferedWorkshops: (incidentId) =>
     client.get(`${APP}/incidents/${incidentId}/offered-workshops/`),
 
+  refreshWorkshopOffers: (incidentId) =>
+    client.post(`${APP}/incidents/${incidentId}/refresh-workshop-offers/`),
+
   selectWorkshop: (incidentId, assignmentId) =>
     client.post(`${APP}/incidents/${incidentId}/select-workshop/`, {
       assignment_id: assignmentId,

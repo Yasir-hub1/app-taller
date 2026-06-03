@@ -58,17 +58,17 @@ export default function ProfileScreen() {
       subtitle: 'Actualiza tu contraseña de acceso',
       onPress: () => router.push('/profile/change-password'),
     },
-    {
-      icon: 'notifications',
-      title: 'Notificaciones',
-      subtitle: 'Preferencias (próximamente)',
-      onPress: () =>
-        Toast.show({
-          type: 'info',
-          text1: 'Próximamente',
-          text2: 'Podrás configurar alertas desde aquí',
-        }),
-    },
+    // {
+    //   icon: 'notifications',
+    //   title: 'Notificaciones',
+    //   subtitle: 'Preferencias (próximamente)',
+    //   onPress: () =>
+    //     Toast.show({
+    //       type: 'info',
+    //       text1: 'Próximamente',
+    //       text2: 'Podrás configurar alertas desde aquí',
+    //     }),
+    // },
     {
       icon: 'help-circle',
       title: 'Ayuda',
@@ -107,12 +107,12 @@ export default function ProfileScreen() {
               <Ionicons name="call-outline" size={20} color="#64748b" />
               <Text className="text-dark-700 ml-3 flex-1">{user?.phone || 'Sin teléfono'}</Text>
             </View>
-            <View className="flex-row items-start mb-3">
+            {/* <View className="flex-row items-start mb-3">
               <Ionicons name="location-outline" size={20} color="#64748b" style={{ marginTop: 2 }} />
               <Text className="text-dark-700 ml-3 flex-1">
                 {cp?.address?.trim() ? cp.address : 'Sin dirección registrada'}
               </Text>
-            </View>
+            </View> */}
             {(cp?.emergency_contact_name || cp?.emergency_contact_phone) && (
               <View className="pt-3 border-t border-dark-100">
                 <Text className="text-dark-500 text-xs font-semibold mb-2">Emergencias</Text>
@@ -144,7 +144,7 @@ export default function ProfileScreen() {
 
           <Card className="p-4 mt-2 flex-row items-center">
             <Ionicons name="information-circle-outline" size={22} color="#64748b" />
-            <Text className="text-dark-600 text-sm ml-3 flex-1">Versión 1.0.0</Text>
+            <Text className="text-dark-600 text-sm ml-3 flex-1">Versión 1.0.5</Text>
           </Card>
 
           <Button

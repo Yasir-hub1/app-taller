@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Alert, Image } from 'react-native';
+import { View, Text, Alert, Image, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -22,13 +22,19 @@ function toFiniteNumber(value) {
 }
 
 const SERVICE_LABELS = {
-  battery: 'Bateria',
+  battery: 'Batería',
   tire: 'Llantas',
-  towing: 'Grua',
+  towing: 'Grúa',
   engine: 'Motor',
   accident: 'Accidente',
-  locksmith: 'Cerrajeria',
-  general: 'Mecanica general',
+  locksmith: 'Cerrajería',
+  general: 'Mecánica general',
+  bateria: 'Batería',
+  llanta: 'Llantas',
+  remolque: 'Grúa',
+  motor: 'Motor',
+  accidente: 'Accidente',
+  cerrajeria: 'Cerrajería',
 };
 
 function mediaUrl(path) {
@@ -41,10 +47,15 @@ function mediaUrl(path) {
 export default function HomeScreen() {
   const { location, loading: loadingLocation, error: locationError } = useLocation();
   const [selectedWorkshop, setSelectedWorkshop] = useState(null);
+  const [showWorkshopList, setShowWorkshopList] = useState(false);
   const activeIncident = useIncidentStore((state) => state.activeIncident);
 
-  // Obtener talleres cercanos
-  const { data: workshops = [], isLoading: loadingWorkshops } = useQuery({
+  const {
+    data: workshops = [],
+    isLoading: loadingWorkshops,
+    refetch: refetchWorkshops,
+    isFetching: fetchingWorkshops,
+  } = useQuery({
     queryKey: ['nearby-workshops', location?.latitude, location?.longitude],
     queryFn: async () => {
       if (!location) return [];
@@ -110,6 +121,29 @@ export default function HomeScreen() {
     });
 
     router.push('/emergency');
+  };
+
+  const handleSearchWorkshops = async () => {
+    if (!location) {
+      Alert.alert('Ubicación', 'Activa el GPS para buscar talleres cerca de ti.');
+      return;
+    }
+    const result = await refetchWorkshops();
+    const list = result.data ?? workshops;
+    setShowWorkshopList(true);
+    if (!list.length) {
+      Alert.alert(
+        'Sin talleres cercanos',
+        'No hay talleres verificados en tu zona. El administrador debe verificar el taller y debe tener ubicación y radio de cobertura que incluya tu posición.',
+      );
+      return;
+    }
+    Toast.show({
+      type: 'success',
+      text1: 'Talleres cercanos',
+      text2: `${list.length} taller(es) en el mapa. Toca un marcador o elige en la lista.`,
+    });
+    if (list[0]) setSelectedWorkshop(list[0]);
   };
 
   if (loadingLocation) {
@@ -186,20 +220,42 @@ export default function HomeScreen() {
           className="mb-3"
         />
         <Button
-          title="Buscar Taller Cercano"
-          onPress={() => {
-            Toast.show({
-              type: 'info',
-              text1: 'Talleres',
-              text2: `${workshops.length || 0} talleres disponibles`,
-            });
-          }}
+          title={fetchingWorkshops ? 'Buscando…' : 'Buscar Taller Cercano'}
+          onPress={handleSearchWorkshops}
           variant="outline"
           size="md"
           full
           icon="search"
+          loading={fetchingWorkshops}
         />
       </View>
+
+      {showWorkshopList && workshops.length > 0 && !selectedWorkshop ? (
+        <View className="absolute bottom-28 left-0 right-0 max-h-48 bg-white border-t border-dark-100 px-4 py-2">
+          <Text className="text-dark-900 font-semibold text-sm mb-2">Talleres cercanos</Text>
+          <ScrollView>
+            {workshops.map((w) => (
+              <Pressable
+                key={w.id}
+                className="py-2 border-b border-dark-50"
+                onPress={() => {
+                  setSelectedWorkshop(w);
+                  setShowWorkshopList(false);
+                }}
+              >
+                <Text className="text-dark-900 font-medium">{w.name}</Text>
+                <Text className="text-dark-500 text-xs">
+                  {w.distance_km != null ? formatDistance(w.distance_km) : '—'} · ★{' '}
+                  {w.rating_avg != null ? Number(w.rating_avg).toFixed(1) : 'N/A'}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <Pressable onPress={() => setShowWorkshopList(false)} className="py-2">
+            <Text className="text-primary-600 text-sm text-center">Cerrar lista</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {/* Bottom sheet para taller seleccionado */}
       {selectedWorkshop && (

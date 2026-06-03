@@ -74,6 +74,7 @@ export default function IncidentStatusScreen() {
             if (payload.event === 'status_change' || payload.event === 'ai_complete') {
               queryClient.invalidateQueries({ queryKey: ['incident', incidentId] });
               queryClient.invalidateQueries({ queryKey: ['incident-assignment', incidentId] });
+              queryClient.invalidateQueries({ queryKey: ['offered-workshops', incidentId] });
             }
           } catch {
             // ignore malformed events
@@ -327,7 +328,10 @@ export default function IncidentStatusScreen() {
           </Text>
         </Card>
 
-        <IncidentQuotesWorkshops incidentId={String(incident.id)} />
+        <IncidentQuotesWorkshops
+          incidentId={String(incident.id)}
+          incidentStatus={incident.status}
+        />
 
         <ClientLiveTrackingBlock
           incidentId={incident.id}

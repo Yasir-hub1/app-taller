@@ -34,6 +34,7 @@ import {
   getAssignmentStatusLabel,
 } from '../../../src/utils/format';
 import ClientLiveTrackingBlock from '../../../src/components/incident/ClientLiveTrackingBlock';
+import IncidentQuotesWorkshops from '../../../src/components/incident/IncidentQuotesWorkshops';
 
 export default function RequestDetailScreen() {
   const { id: routeId } = useLocalSearchParams();
@@ -261,6 +262,11 @@ export default function RequestDetailScreen() {
           incidentLat={incident.latitude}
           incidentLng={incident.longitude}
           assignment={effectiveAssignment}
+        />
+
+        <IncidentQuotesWorkshops
+          incidentId={String(incident.id)}
+          incidentStatus={incident.status}
         />
 
         {incident.description ? (
