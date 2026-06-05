@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "AhoringaLlego",
-    "slug": "emergencias-vehiculares",
+    "name": "Mecanica la leyenda",
+    "slug": "emergencias-meca-leyenda",
     "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/logo1.png",
-    "scheme": "emergenciasveh",
+    "scheme": "emergencias-meca-leyenda",
     "userInterfaceStyle": "automatic",
     "web": {
       "bundler": "metro"
@@ -17,7 +17,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.emergencias.vehiculares",
+      "bundleIdentifier": "com.emergencias.meca_leyenda",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
@@ -35,18 +35,14 @@
         "foregroundImage": "./assets/logo1.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.emergencias.vehiculares",
+      "package": "com.emergencias.meca_leyenda",
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CAMERA",
-        "RECORD_AUDIO",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
@@ -97,10 +93,10 @@
       "router": {
         "origin": false
       },
-      "apiUrl": "https://ws-taller.smartcondominio.lat",
+      "apiUrl": "https://ws-taller-meca-leyenda.chambi.shop",
       "easProjectId": "f59886ef-554f-4721-b283-d328fcf64ac1",
       "eas": {
-        "projectId": "f59886ef-554f-4721-b283-d328fcf64ac1"
+        "projectId": "36b1d731-fa7b-4ed9-8728-6b57015a187b"
       }
     },
     "owner": "rister"
