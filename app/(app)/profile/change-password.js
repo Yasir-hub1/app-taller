@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import Input from '../../../src/components/ui/Input';
 import Button from '../../../src/components/ui/Button';
+import AppScreen from '../../../src/components/ui/AppScreen';
+import PageHeader from '../../../src/components/ui/PageHeader';
 import { authApi } from '../../../src/api/auth.api';
 import { formatApiError } from '../../../src/utils/apiErrors';
 
@@ -59,16 +60,16 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <AppScreen>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
       >
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-          <Text className="text-dark-900 font-bold text-2xl mb-1">Cambiar contraseña</Text>
-          <Text className="text-dark-600 text-sm mb-6">
-            Introduce tu contraseña actual y elige una nueva segura.
-          </Text>
+          <PageHeader
+            title="Cambiar contraseña"
+            subtitle="Introduce tu contraseña actual y elige una nueva segura."
+          />
 
           <Input
             label="Contraseña actual"
@@ -98,12 +99,12 @@ export default function ChangePasswordScreen() {
             loading={mutation.isPending}
             full
             size="lg"
-            icon="lock-closed"
+            icon="lock-closed-outline"
             className="mt-4"
           />
           <Button title="Cancelar" onPress={() => router.back()} variant="ghost" full className="mt-2" />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

@@ -16,7 +16,7 @@ export default function Index() {
           resizeMode="contain"
         />
         <Text className="text-white text-xl font-bold mb-4">
-          Emergencias Vehiculares
+          Mecanica la leyenda
         </Text>
         <Loading message="Cargando..." fullScreen={false} />
       </View>

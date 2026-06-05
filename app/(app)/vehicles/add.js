@@ -9,7 +9,9 @@ import {
   Image,
   Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '../../../src/components/ui/AppScreen';
+import PageHeader from '../../../src/components/ui/PageHeader';
+import { COLORS, GLASS } from '../../../src/constants/colors';
 import { router } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
 import { pickImageFromLibrary, takeImageFromCamera } from '../../../src/utils/imagePicker';
@@ -179,7 +181,7 @@ export default function AddVehicleScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <AppScreen>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
@@ -198,19 +200,19 @@ export default function AddVehicleScreen() {
             />
           </View>
 
-          <Text className="text-dark-900 font-bold text-2xl mb-2">
-            Agregar Vehículo
-          </Text>
-          <Text className="text-dark-600 text-base mb-6">
-            Registra tu vehículo para poder reportar emergencias
-          </Text>
+          <PageHeader
+            title="Agregar vehículo"
+            subtitle="Registra tu vehículo para poder reportar emergencias"
+            className="px-0 pt-0"
+          />
 
           <Text className="text-dark-700 font-semibold mb-2 text-sm">
             Foto del vehículo (opcional)
           </Text>
           <Pressable
             onPress={pickVehiclePhoto}
-            className="mb-2 rounded-2xl border-2 border-dashed border-dark-200 bg-dark-50 overflow-hidden"
+            className="mb-2 rounded-2xl border-2 border-dashed border-primary-200 overflow-hidden"
+            style={{ backgroundColor: 'rgba(255,255,255,0.72)' }}
           >
             {formData.photoUri ? (
               <View>
@@ -219,7 +221,10 @@ export default function AddVehicleScreen() {
                   className="w-full h-44"
                   resizeMode="cover"
                 />
-                <View className="flex-row justify-center gap-2 py-2 bg-white border-t border-dark-100">
+                <View
+                  className="flex-row justify-center gap-2 py-2 border-t border-primary-100"
+                  style={{ backgroundColor: GLASS.background }}
+                >
                   <Button title="Cambiar foto" onPress={pickVehiclePhoto} variant="ghost" size="sm" />
                   <Button
                     title="Quitar"
@@ -351,6 +356,6 @@ export default function AddVehicleScreen() {
           />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

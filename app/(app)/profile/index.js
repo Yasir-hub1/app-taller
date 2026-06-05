@@ -1,13 +1,15 @@
 import React, { useCallback } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+import AppScreen from '../../../src/components/ui/AppScreen';
+import PageHeader from '../../../src/components/ui/PageHeader';
 import Card from '../../../src/components/ui/Card';
 import Button from '../../../src/components/ui/Button';
 import { useAuthStore } from '../../../src/store/auth.store';
 import { authApi } from '../../../src/api/auth.api';
+import { COLORS } from '../../../src/constants/colors';
 
 export default function ProfileScreen() {
   const { user, logout, updateUser } = useAuthStore();
@@ -47,30 +49,19 @@ export default function ProfileScreen() {
 
   const menuItems = [
     {
-      icon: 'person',
+      icon: 'person-outline',
       title: 'Editar perfil',
       subtitle: 'Nombre, teléfono, dirección y contacto de emergencia',
       onPress: () => router.push('/profile/edit'),
     },
     {
-      icon: 'lock-closed',
+      icon: 'lock-closed-outline',
       title: 'Cambiar contraseña',
       subtitle: 'Actualiza tu contraseña de acceso',
       onPress: () => router.push('/profile/change-password'),
     },
-    // {
-    //   icon: 'notifications',
-    //   title: 'Notificaciones',
-    //   subtitle: 'Preferencias (próximamente)',
-    //   onPress: () =>
-    //     Toast.show({
-    //       type: 'info',
-    //       text1: 'Próximamente',
-    //       text2: 'Podrás configurar alertas desde aquí',
-    //     }),
-    // },
     {
-      icon: 'help-circle',
+      icon: 'help-circle-outline',
       title: 'Ayuda',
       subtitle: 'Soporte y preguntas frecuentes',
       onPress: () =>
@@ -87,10 +78,22 @@ export default function ProfileScreen() {
     [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() || user?.username || 'Usuario';
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+    <AppScreen>
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
-        <View className="items-center py-8 px-4 bg-white border-b border-dark-100">
-          <View className="w-24 h-24 rounded-full bg-primary-600 items-center justify-center mb-4">
+        <PageHeader title="Mi perfil" subtitle="Tu cuenta y preferencias" />
+
+        <View className="items-center px-4 pb-6">
+          <View
+            className="w-24 h-24 rounded-full items-center justify-center mb-4"
+            style={{
+              backgroundColor: COLORS.primary,
+              shadowColor: COLORS.primary,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.28,
+              shadowRadius: 12,
+              elevation: 4,
+            }}
+          >
             <Text className="text-white text-4xl font-bold">
               {displayName.charAt(0).toUpperCase()}
             </Text>
@@ -100,22 +103,16 @@ export default function ProfileScreen() {
           <Text className="text-dark-500 text-sm mt-1">@{user?.username}</Text>
         </View>
 
-        <View className="px-4 py-4">
-          <Text className="text-dark-800 font-semibold text-sm mb-2 px-1">Resumen de cuenta</Text>
+        <View className="px-4">
+          <Text className="text-dark-700 font-semibold text-sm mb-2 px-1">Resumen de cuenta</Text>
           <Card className="p-4 mb-4">
             <View className="flex-row items-center mb-3">
-              <Ionicons name="call-outline" size={20} color="#64748b" />
+              <Ionicons name="call-outline" size={20} color={COLORS.textLight} />
               <Text className="text-dark-700 ml-3 flex-1">{user?.phone || 'Sin teléfono'}</Text>
             </View>
-            {/* <View className="flex-row items-start mb-3">
-              <Ionicons name="location-outline" size={20} color="#64748b" style={{ marginTop: 2 }} />
-              <Text className="text-dark-700 ml-3 flex-1">
-                {cp?.address?.trim() ? cp.address : 'Sin dirección registrada'}
-              </Text>
-            </View> */}
             {(cp?.emergency_contact_name || cp?.emergency_contact_phone) && (
-              <View className="pt-3 border-t border-dark-100">
-                <Text className="text-dark-500 text-xs font-semibold mb-2">Emergencias</Text>
+              <View className="pt-3 border-t border-primary-100">
+                <Text className="text-dark-500 text-xs font-semibold mb-2">Contacto de emergencia</Text>
                 <Text className="text-dark-700 text-sm">
                   {cp.emergency_contact_name || '—'}
                   {cp.emergency_contact_phone ? ` · ${cp.emergency_contact_phone}` : ''}
@@ -124,15 +121,15 @@ export default function ProfileScreen() {
             )}
           </Card>
 
-          <Text className="text-dark-800 font-semibold text-sm mb-2 px-1">Cuenta y seguridad</Text>
+          <Text className="text-dark-700 font-semibold text-sm mb-2 px-1">Cuenta y seguridad</Text>
           {menuItems.map((item, index) => (
             <Card
               key={index}
               onPress={item.onPress}
-              className="p-4 mb-2 flex-row items-center active:bg-dark-50"
+              className="p-4 mb-2 flex-row items-center"
             >
-              <View className="w-10 h-10 rounded-full bg-primary-50 items-center justify-center mr-3">
-                <Ionicons name={item.icon} size={20} color="#ef4444" />
+              <View className="w-10 h-10 rounded-xl bg-primary-50 items-center justify-center mr-3">
+                <Ionicons name={item.icon} size={20} color={COLORS.primary} />
               </View>
               <View className="flex-1">
                 <Text className="text-dark-900 font-semibold">{item.title}</Text>
@@ -143,7 +140,7 @@ export default function ProfileScreen() {
           ))}
 
           <Card className="p-4 mt-2 flex-row items-center">
-            <Ionicons name="information-circle-outline" size={22} color="#64748b" />
+            <Ionicons name="information-circle-outline" size={22} color={COLORS.textLight} />
             <Text className="text-dark-600 text-sm ml-3 flex-1">Versión 1.0.5</Text>
           </Card>
 
@@ -153,11 +150,11 @@ export default function ProfileScreen() {
             variant="danger"
             size="lg"
             full
-            icon="log-out"
+            icon="log-out-outline"
             className="mt-6"
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

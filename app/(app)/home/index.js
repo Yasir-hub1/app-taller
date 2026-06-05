@@ -1,41 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Alert, Image, ScrollView, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, Alert, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import OsmLeafletMap from '../../../src/components/map/OsmLeafletMap';
+import NearbyWorkshopsModal from '../../../src/components/workshop/NearbyWorkshopsModal';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import Button from '../../../src/components/ui/Button';
 import Card from '../../../src/components/ui/Card';
 import Loading from '../../../src/components/ui/Loading';
+import AppScreen from '../../../src/components/ui/AppScreen';
+import { COLORS, GLASS } from '../../../src/constants/colors';
 import { useLocation } from '../../../src/hooks/useLocation';
 import { workshopsApi } from '../../../src/api/workshops.api';
 import { incidentsApi } from '../../../src/api/incidents.api';
 import { useIncidentStore } from '../../../src/store/incident.store';
-import { formatDistance } from '../../../src/utils/format';
 import { API_BASE_URL } from '../../../src/constants/api';
+import { formatDistance } from '../../../src/utils/format';
 
 function toFiniteNumber(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
-
-const SERVICE_LABELS = {
-  battery: 'Batería',
-  tire: 'Llantas',
-  towing: 'Grúa',
-  engine: 'Motor',
-  accident: 'Accidente',
-  locksmith: 'Cerrajería',
-  general: 'Mecánica general',
-  bateria: 'Batería',
-  llanta: 'Llantas',
-  remolque: 'Grúa',
-  motor: 'Motor',
-  accidente: 'Accidente',
-  cerrajeria: 'Cerrajería',
-};
 
 function mediaUrl(path) {
   if (!path || typeof path !== 'string') return null;
@@ -44,15 +30,62 @@ function mediaUrl(path) {
   return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
+function StatChip({ icon, label, value, accent }) {
+  return (
+    <View
+      className="flex-1 flex-row items-center rounded-2xl border border-primary-100 px-3 py-2.5"
+      style={{ backgroundColor: GLASS.background }}
+    >
+      <View
+        className="w-9 h-9 rounded-xl items-center justify-center mr-2.5"
+        style={{ backgroundColor: accent ? 'rgba(37,99,235,0.12)' : 'rgba(248,250,252,0.9)' }}
+      >
+        <Ionicons name={icon} size={18} color={accent ? COLORS.primary : COLORS.textLight} />
+      </View>
+      <View className="flex-1 min-w-0">
+        <Text className="text-dark-500 text-[10px] font-semibold uppercase tracking-wide">{label}</Text>
+        <Text className="text-dark-900 font-bold text-sm" numberOfLines={1}>
+          {value}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function MapLegend() {
+  return (
+    <View
+      className="rounded-2xl border border-primary-100 px-3 py-2"
+      style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
+    >
+      <View className="flex-row items-center mb-1.5">
+        <View
+          className="w-3 h-3 rounded-full mr-2 border-2 border-white"
+          style={{ backgroundColor: COLORS.primary, shadowColor: COLORS.primary, shadowOpacity: 0.4, shadowRadius: 3 }}
+        />
+        <Text className="text-dark-700 text-xs font-medium">Tu ubicación</Text>
+      </View>
+      <View className="flex-row items-center">
+        <View
+          className="w-5 h-5 rounded-md mr-2 items-center justify-center border border-white"
+          style={{ backgroundColor: COLORS.primary }}
+        >
+          <Ionicons name="build" size={10} color="#fff" />
+        </View>
+        <Text className="text-dark-700 text-xs font-medium">Taller verificado</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const { location, loading: loadingLocation, error: locationError } = useLocation();
+  const [workshopsModalOpen, setWorkshopsModalOpen] = useState(false);
   const [selectedWorkshop, setSelectedWorkshop] = useState(null);
-  const [showWorkshopList, setShowWorkshopList] = useState(false);
   const activeIncident = useIncidentStore((state) => state.activeIncident);
 
   const {
     data: workshops = [],
-    isLoading: loadingWorkshops,
     refetch: refetchWorkshops,
     isFetching: fetchingWorkshops,
   } = useQuery({
@@ -87,7 +120,6 @@ export default function HomeScreen() {
     },
   });
 
-  // Verificar si hay incidente activo
   const { data: activeIncidents } = useQuery({
     queryKey: ['active-incidents'],
     queryFn: async () => {
@@ -104,6 +136,18 @@ export default function HomeScreen() {
     }
   }, [activeIncidents]);
 
+  const nearestWorkshop = workshops[0] ?? null;
+
+  const openWorkshopsModal = (workshop = null) => {
+    setSelectedWorkshop(workshop);
+    setWorkshopsModalOpen(true);
+  };
+
+  const closeWorkshopsModal = () => {
+    setWorkshopsModalOpen(false);
+    setSelectedWorkshop(null);
+  };
+
   const handleReportEmergency = () => {
     if (!location) {
       Alert.alert(
@@ -114,7 +158,6 @@ export default function HomeScreen() {
       return;
     }
 
-    // Guardar ubicación en el store
     useIncidentStore.getState().setDraft({
       draftLatitude: location.latitude,
       draftLongitude: location.longitude,
@@ -128,22 +171,22 @@ export default function HomeScreen() {
       Alert.alert('Ubicación', 'Activa el GPS para buscar talleres cerca de ti.');
       return;
     }
+    openWorkshopsModal(null);
     const result = await refetchWorkshops();
     const list = result.data ?? workshops;
-    setShowWorkshopList(true);
     if (!list.length) {
-      Alert.alert(
-        'Sin talleres cercanos',
-        'No hay talleres verificados en tu zona. El administrador debe verificar el taller y debe tener ubicación y radio de cobertura que incluya tu posición.',
-      );
+      Toast.show({
+        type: 'info',
+        text1: 'Sin talleres cercanos',
+        text2: 'No hay talleres verificados en tu zona por ahora.',
+      });
       return;
     }
     Toast.show({
       type: 'success',
-      text1: 'Talleres cercanos',
-      text2: `${list.length} taller(es) en el mapa. Toca un marcador o elige en la lista.`,
+      text1: 'Talleres encontrados',
+      text2: `${list.length} taller(es) cerca de ti.`,
     });
-    if (list[0]) setSelectedWorkshop(list[0]);
   };
 
   if (loadingLocation) {
@@ -152,175 +195,191 @@ export default function HomeScreen() {
 
   if (locationError || !location) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
-        <Ionicons name="location-off" size={64} color="#ef4444" />
-        <Text className="text-dark-900 font-bold text-xl mt-4 text-center">
+      <AppScreen className="items-center justify-center px-6">
+        <View className="w-20 h-20 rounded-full bg-primary-50 items-center justify-center mb-4">
+          <Ionicons name="location-outline" size={40} color={COLORS.primary} />
+        </View>
+        <Text className="text-dark-900 font-bold text-xl text-center">
           No se pudo obtener tu ubicación
         </Text>
-        <Text className="text-dark-600 text-base mt-2 text-center">
-          {locationError || 'Por favor, activa el GPS y da permisos a la app'}
+        <Text className="text-dark-600 text-base mt-2 text-center leading-6">
+          {locationError || 'Activa el GPS y concede permisos a la app'}
         </Text>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <AppScreen orbs={false}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-dark-100">
-        <Text className="text-dark-900 font-bold text-xl">Emergencias Vehiculares</Text>
-        <Text className="text-dark-600 text-sm">
-          {workshops?.length || 0} talleres encontrados cerca
-        </Text>
+      <View className="px-4 pt-2 pb-3">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 min-w-0 pr-3">
+            <Text className="text-primary-600 font-semibold text-xs uppercase tracking-widest">
+              Mecanic La Leyenda
+            </Text>
+            <Text className="text-dark-900 font-bold text-2xl tracking-tight mt-0.5">
+              Asistencia cerca
+            </Text>
+            <Text className="text-dark-500 text-sm mt-1 leading-5">
+              Talleres verificados en un radio de 20 km
+            </Text>
+          </View>
+          <View
+            className="w-12 h-12 rounded-2xl items-center justify-center"
+            style={{
+              backgroundColor: COLORS.primary,
+              shadowColor: COLORS.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.28,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
+          >
+            <Ionicons name="shield-checkmark" size={24} color="#fff" />
+          </View>
+        </View>
+
+        <View className="flex-row gap-2 mt-3">
+          <StatChip
+            icon="construct-outline"
+            label="Talleres"
+            value={workshops.length ? `${workshops.length} cerca` : 'Buscando…'}
+            accent
+          />
+          <StatChip
+            icon="navigate-outline"
+            label="Más cercano"
+            value={
+              nearestWorkshop?.distance_km != null
+                ? formatDistance(nearestWorkshop.distance_km)
+                : '—'
+            }
+          />
+        </View>
       </View>
 
-      {/* Banner de incidente activo */}
+      {/* Incidente activo */}
       {activeIncident && (
-        <Card
+        <Pressable
           onPress={() => router.push(`/emergency/status/${activeIncident.id}`)}
-          className="mx-4 mt-3 p-4 bg-amber-50 border-amber-200"
+          className="mx-4 mb-3 rounded-2xl overflow-hidden active:opacity-90"
         >
-          <View className="flex-row items-center">
-            <View className="w-10 h-10 rounded-full bg-amber-500 items-center justify-center mr-3">
-              <Ionicons name="alert-circle" size={24} color="#fff" />
+          <View
+            className="flex-row items-center px-4 py-3 border border-amber-200"
+            style={{ backgroundColor: 'rgba(255, 251, 235, 0.95)' }}
+          >
+            <View className="w-11 h-11 rounded-2xl bg-amber-500 items-center justify-center mr-3">
+              <Ionicons name="pulse" size={22} color="#fff" />
             </View>
-            <View className="flex-1">
-              <Text className="text-dark-900 font-bold">Tienes un incidente en curso</Text>
-              <Text className="text-dark-600 text-sm">Toca para ver detalles y estado</Text>
+            <View className="flex-1 min-w-0">
+              <Text className="text-amber-900 font-bold text-sm">Emergencia en curso</Text>
+              <Text className="text-amber-800/80 text-xs mt-0.5">Toca para ver estado y seguimiento</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color="#64748b" />
+            <Ionicons name="chevron-forward-circle" size={26} color="#d97706" />
           </View>
-        </Card>
+        </Pressable>
       )}
 
-      {/* Mapa OpenStreetMap (Leaflet + WebView; sin Google Maps / API key) */}
-      <View className="flex-1 mt-2">
+      {/* Mapa */}
+      <View
+        className="flex-1 mx-4 mb-3 rounded-3xl overflow-hidden border border-primary-200/70"
+        style={{
+          shadowColor: '#2563eb',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.1,
+          shadowRadius: 16,
+          elevation: 5,
+        }}
+      >
         <OsmLeafletMap
           style={{ flex: 1 }}
           userLocation={location}
           latitudeDelta={0.05}
-          longitudeDelta={0.05}
           circleRadiusMeters={20000}
           workshops={workshops}
           onWorkshopPress={(id) => {
             const ws = workshops.find((w) => w.id === id);
-            if (ws) setSelectedWorkshop(ws);
+            if (ws) openWorkshopsModal(ws);
           }}
         />
-      </View>
 
-      {/* Botones de acción */}
-      <View className="px-4 py-4 bg-white border-t border-dark-100">
-        <Button
-          title="🚨 REPORTAR EMERGENCIA"
-          onPress={handleReportEmergency}
-          variant="primary"
-          size="lg"
-          full
-          className="mb-3"
-        />
-        <Button
-          title={fetchingWorkshops ? 'Buscando…' : 'Buscar Taller Cercano'}
+        <View className="absolute top-3 left-3" pointerEvents="none">
+          <MapLegend />
+        </View>
+
+        <Pressable
           onPress={handleSearchWorkshops}
-          variant="outline"
-          size="md"
-          full
-          icon="search"
-          loading={fetchingWorkshops}
-        />
+          disabled={fetchingWorkshops}
+          className="absolute bottom-3 right-3 flex-row items-center rounded-2xl px-3.5 py-2.5 border border-primary-200 active:opacity-85"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.95)',
+            shadowColor: '#2563eb',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            elevation: 4,
+          }}
+        >
+          {fetchingWorkshops ? (
+            <Ionicons name="sync" size={18} color={COLORS.primary} />
+          ) : (
+            <Ionicons name="list-outline" size={18} color={COLORS.primary} />
+          )}
+          <Text className="text-primary-700 font-bold text-sm ml-2">
+            {fetchingWorkshops ? 'Buscando…' : `Ver ${workshops.length || ''} talleres`.trim()}
+          </Text>
+        </Pressable>
       </View>
 
-      {showWorkshopList && workshops.length > 0 && !selectedWorkshop ? (
-        <View className="absolute bottom-28 left-0 right-0 max-h-48 bg-white border-t border-dark-100 px-4 py-2">
-          <Text className="text-dark-900 font-semibold text-sm mb-2">Talleres cercanos</Text>
-          <ScrollView>
-            {workshops.map((w) => (
-              <Pressable
-                key={w.id}
-                className="py-2 border-b border-dark-50"
-                onPress={() => {
-                  setSelectedWorkshop(w);
-                  setShowWorkshopList(false);
-                }}
-              >
-                <Text className="text-dark-900 font-medium">{w.name}</Text>
-                <Text className="text-dark-500 text-xs">
-                  {w.distance_km != null ? formatDistance(w.distance_km) : '—'} · ★{' '}
-                  {w.rating_avg != null ? Number(w.rating_avg).toFixed(1) : 'N/A'}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          <Pressable onPress={() => setShowWorkshopList(false)} className="py-2">
-            <Text className="text-primary-600 text-sm text-center">Cerrar lista</Text>
-          </Pressable>
-        </View>
-      ) : null}
-
-      {/* Bottom sheet para taller seleccionado */}
-      {selectedWorkshop && (
-        <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-lg px-4 py-4">
-          {(() => {
-            const ratingValue = selectedWorkshop.rating_avg;
-            const distanceValue = selectedWorkshop.distance_km;
-            const logoUri = mediaUrl(selectedWorkshop.logo);
-            const serviceLabels = selectedWorkshop.services
-              .map((s) => SERVICE_LABELS[s] || s)
-              .slice(0, 4);
-            return (
-              <>
-          <View className="flex-row items-start justify-between mb-3">
-            <View className="flex-1 flex-row">
-              <View className="w-14 h-14 rounded-xl bg-slate-100 items-center justify-center mr-3 overflow-hidden">
-                {logoUri ? (
-                  <Image source={{ uri: logoUri }} className="w-full h-full" resizeMode="cover" />
-                ) : (
-                  <Ionicons name="construct" size={22} color="#475569" />
-                )}
-              </View>
-              <View className="flex-1">
-              <Text className="text-dark-900 font-bold text-lg">{selectedWorkshop.name}</Text>
-              <View className="flex-row items-center mt-1">
-                <Ionicons name="star" size={16} color="#f59e0b" />
-                <Text className="text-dark-700 ml-1 mr-3">
-                  {ratingValue != null ? ratingValue.toFixed(1) : 'N/A'}
-                </Text>
-                <Ionicons name="location" size={16} color="#64748b" />
-                <Text className="text-dark-600 ml-1">
-                  {distanceValue != null ? formatDistance(distanceValue) : 'Distancia no disponible'}
-                </Text>
-              </View>
+      {/* Acciones */}
+      <View className="px-4 pb-4">
+        <Card className="p-4">
+          <View className="flex-row items-center mb-3">
+            <View className="w-10 h-10 rounded-xl bg-red-50 items-center justify-center mr-3">
+              <Ionicons name="warning" size={22} color="#dc2626" />
             </View>
+            <View className="flex-1">
+              <Text className="text-dark-900 font-bold text-base">¿Necesitas ayuda ahora?</Text>
+              <Text className="text-dark-500 text-xs mt-0.5">
+                Reporta tu emergencia y te conectamos con un taller
+              </Text>
             </View>
-            <Button
-              title="Cerrar"
-              onPress={() => setSelectedWorkshop(null)}
-              variant="ghost"
-              size="sm"
-              icon="close"
-            />
           </View>
 
-          {selectedWorkshop.description && (
-            <Text className="text-dark-600 text-sm mb-3" numberOfLines={2}>
-              {selectedWorkshop.description}
+          <Button
+            title="Reportar emergencia"
+            onPress={handleReportEmergency}
+            variant="primary"
+            size="lg"
+            full
+            icon="flash-outline"
+            className="mb-2"
+          />
+
+          <Pressable
+            onPress={handleSearchWorkshops}
+            disabled={fetchingWorkshops}
+            className="flex-row items-center justify-center py-3 rounded-xl active:bg-primary-50"
+          >
+            <Ionicons name="map-outline" size={18} color={COLORS.primary} />
+            <Text className="text-primary-600 font-semibold text-sm ml-2">
+              Explorar talleres en el mapa
             </Text>
-          )}
+          </Pressable>
+        </Card>
+      </View>
 
-          <Text className="text-dark-900 font-semibold text-sm mb-1">Servicios</Text>
-          <Text className="text-dark-600 text-sm mb-3">
-            {serviceLabels.length ? serviceLabels.join(' · ') : 'Sin servicios registrados'}
-          </Text>
-
-          <View className="flex-row items-center">
-            <Ionicons name="call" size={16} color="#64748b" />
-            <Text className="text-dark-700 ml-2">{selectedWorkshop.phone}</Text>
-          </View>
-              </>
-            );
-          })()}
-        </View>
-      )}
-    </SafeAreaView>
+      <NearbyWorkshopsModal
+        visible={workshopsModalOpen}
+        onClose={closeWorkshopsModal}
+        workshops={workshops}
+        loading={fetchingWorkshops}
+        selectedWorkshop={selectedWorkshop}
+        onSelectWorkshop={setSelectedWorkshop}
+        onClearSelection={() => setSelectedWorkshop(null)}
+        resolveLogoUri={mediaUrl}
+      />
+    </AppScreen>
   );
 }

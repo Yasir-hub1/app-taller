@@ -8,7 +8,8 @@ import {
   Image,
   Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '../../../../src/components/ui/AppScreen';
+import { COLORS } from '../../../../src/constants/colors';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -192,8 +193,8 @@ export default function IncidentStatusScreen() {
 
   if (!incidentId) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
-        <Ionicons name="alert-circle" size={64} color="#ef4444" />
+      <AppScreen className="items-center justify-center px-6">
+        <Ionicons name="alert-circle" size={64} color={COLORS.primary} />
         <Text className="text-dark-900 font-bold text-xl mt-4 text-center">
           No se encontró el incidente
         </Text>
@@ -207,19 +208,19 @@ export default function IncidentStatusScreen() {
           size="md"
           className="mt-6"
         />
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   if (isLocal && localClientRequestId) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+      <AppScreen>
         <ScrollView contentContainerStyle={{ padding: 16 }}>
           <Button title="← Volver" onPress={() => router.back()} variant="ghost" size="sm" />
           <Text className="text-dark-900 font-bold text-2xl mt-2 mb-4">Emergencia (local)</Text>
           <PendingIncidentStatus localClientRequestId={localClientRequestId} />
         </ScrollView>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
@@ -229,8 +230,8 @@ export default function IncidentStatusScreen() {
 
   if (isError || !incident) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
-        <Ionicons name="cloud-offline" size={64} color="#ef4444" />
+      <AppScreen className="items-center justify-center px-6">
+        <Ionicons name="cloud-offline" size={64} color={COLORS.primary} />
         <Text className="text-dark-900 font-bold text-xl mt-4 text-center">
           No pudimos cargar el incidente
         </Text>
@@ -251,7 +252,7 @@ export default function IncidentStatusScreen() {
           size="md"
           className="mt-3"
         />
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
@@ -278,7 +279,7 @@ export default function IncidentStatusScreen() {
     effectiveAssignment?.service_cost != null;
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+    <AppScreen>
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         nestedScrollEnabled
@@ -305,10 +306,10 @@ export default function IncidentStatusScreen() {
           Creado {formatDate(incident.created_at)} · {formatRelativeTime(incident.created_at)}
         </Text>
 
-        <Card className="p-4 mb-4 border-l-4 border-l-primary-500 bg-white">
+        <Card className="p-4 mb-4 border-l-4 border-l-primary-500">
           <View className="flex-row items-start">
             <View className="w-14 h-14 rounded-2xl bg-primary-100 items-center justify-center mr-3">
-              <Ionicons name={typeIcon} size={28} color="#ef4444" />
+              <Ionicons name={typeIcon} size={28} color={COLORS.primary} />
             </View>
             <View className="flex-1">
               <Text className="text-dark-900 font-bold text-lg">{typeLabel}</Text>
@@ -568,6 +569,6 @@ export default function IncidentStatusScreen() {
           />
         ) : null}
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

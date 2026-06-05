@@ -8,7 +8,9 @@ import {
   Linking,
   Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '../../../src/components/ui/AppScreen';
+import PageHeader from '../../../src/components/ui/PageHeader';
+import { COLORS } from '../../../src/constants/colors';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -129,13 +131,13 @@ export default function RequestDetailScreen() {
 
   if (!incidentId) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
-        <Ionicons name="alert-circle-outline" size={64} color="#ef4444" />
+      <AppScreen className="items-center justify-center px-6">
+        <Ionicons name="alert-circle-outline" size={64} color={COLORS.primary} />
         <Text className="text-dark-900 font-bold text-xl mt-4 text-center">
           Solicitud no válida
         </Text>
         <Button title="Volver" onPress={() => router.back()} variant="primary" className="mt-6" />
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
@@ -145,8 +147,8 @@ export default function RequestDetailScreen() {
 
   if (isError || !incident) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
-        <Ionicons name="cloud-offline-outline" size={64} color="#ef4444" />
+      <AppScreen className="items-center justify-center px-6">
+        <Ionicons name="cloud-offline-outline" size={64} color={COLORS.primary} />
         <Text className="text-dark-900 font-bold text-xl mt-4 text-center">
           No se pudo cargar la solicitud
         </Text>
@@ -155,7 +157,7 @@ export default function RequestDetailScreen() {
         </Text>
         <Button title="Reintentar" onPress={() => refetch()} variant="primary" className="mt-4" />
         <Button title="Volver" onPress={() => router.back()} variant="outline" className="mt-2" />
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
@@ -208,7 +210,7 @@ export default function RequestDetailScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+    <AppScreen>
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         nestedScrollEnabled
@@ -231,10 +233,10 @@ export default function RequestDetailScreen() {
             : ''}
         </Text>
 
-        <Card className="p-4 mb-4 border-l-4 border-l-primary-500 bg-white">
+        <Card className="p-4 mb-4 border-l-4 border-l-primary-500">
           <View className="flex-row items-start">
             <View className="w-14 h-14 rounded-2xl bg-primary-100 items-center justify-center mr-3">
-              <Ionicons name={getIncidentTypeIcon(typeKey)} size={28} color="#ef4444" />
+              <Ionicons name={getIncidentTypeIcon(typeKey)} size={28} color={COLORS.primary} />
             </View>
             <View className="flex-1">
               <Text className="text-dark-900 font-bold text-lg">
@@ -444,7 +446,7 @@ export default function RequestDetailScreen() {
         {incident.status === 'cancelled' ? (
           <Card className="p-4 mb-4 bg-red-50 border-red-200">
             <View className="flex-row items-center">
-              <Ionicons name="close-circle" size={32} color="#ef4444" />
+              <Ionicons name="close-circle" size={32} color={COLORS.primary} />
               <Text className="text-dark-900 font-bold text-lg ml-3">Cancelado</Text>
             </View>
           </Card>
@@ -487,6 +489,6 @@ export default function RequestDetailScreen() {
           />
         ) : null}
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

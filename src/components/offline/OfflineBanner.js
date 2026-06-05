@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, GLASS } from '../../constants/colors';
 
 export default function OfflineBanner({
   online,
@@ -12,8 +13,11 @@ export default function OfflineBanner({
   if (online && pendingCount === 0 && !lastSyncError) return null;
 
   const offline = !online;
-  const bg = offline ? 'bg-amber-100 border-amber-300' : 'bg-sky-100 border-sky-300';
-  const icon = offline ? 'cloud-offline' : syncing ? 'sync' : pendingCount > 0 ? 'time' : 'warning';
+  const bgStyle = {
+    backgroundColor: offline ? 'rgba(255, 247, 237, 0.92)' : 'rgba(239, 246, 255, 0.92)',
+    borderColor: offline ? '#fcd34d' : GLASS.border,
+  };
+  const icon = offline ? 'cloud-offline-outline' : syncing ? 'sync' : pendingCount > 0 ? 'time-outline' : 'warning-outline';
   const title = offline
     ? 'Sin conexión'
     : syncing
@@ -31,9 +35,14 @@ export default function OfflineBanner({
         : '';
 
   return (
-    <View className={`mx-4 mt-2 mb-1 p-3 rounded-xl border ${bg}`}>
+    <View className="mx-4 mt-2 mb-1 p-3 rounded-xl border" style={bgStyle}>
       <View className="flex-row items-start">
-        <Ionicons name={icon} size={22} color={offline ? '#b45309' : '#0369a1'} style={{ marginRight: 8 }} />
+        <Ionicons
+          name={icon}
+          size={22}
+          color={offline ? '#b45309' : COLORS.primary}
+          style={{ marginRight: 8 }}
+        />
         <View className="flex-1">
           <Text className="text-dark-900 font-semibold text-sm">{title}</Text>
           {sub ? <Text className="text-dark-600 text-xs mt-1">{sub}</Text> : null}

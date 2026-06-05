@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, Alert, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '../../../src/components/ui/AppScreen';
+import { COLORS } from '../../../src/constants/colors';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -75,7 +76,7 @@ export default function VehicleDetailScreen() {
 
   if (!vehicle) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
+      <AppScreen className="items-center justify-center px-6">
         <Ionicons name="car-outline" size={64} color="#cbd5e1" />
         <Text className="text-dark-900 font-bold text-xl mt-4 text-center">
           Vehículo no encontrado
@@ -87,7 +88,7 @@ export default function VehicleDetailScreen() {
           size="md"
           className="mt-6"
         />
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
@@ -103,7 +104,7 @@ export default function VehicleDetailScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <AppScreen>
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {/* Header */}
         <View className="flex-row items-center justify-between mb-6">
@@ -125,7 +126,7 @@ export default function VehicleDetailScreen() {
             />
           ) : (
             <View className="w-32 h-32 rounded-full bg-primary-100 items-center justify-center">
-              <Ionicons name={getVehicleIcon(vehicle.vehicle_type)} size={64} color="#ef4444" />
+              <Ionicons name={getVehicleIcon(vehicle.vehicle_type)} size={64} color={COLORS.primary} />
             </View>
           )}
         </View>
@@ -244,6 +245,6 @@ export default function VehicleDetailScreen() {
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
+import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../../constants/colors';
 
 export default function Button({
   title,
@@ -19,8 +20,8 @@ export default function Button({
   const variantStyles = {
     primary: 'bg-primary-600 active:bg-primary-700',
     secondary: 'bg-dark-600 active:bg-dark-700',
-    outline: 'border-2 border-primary-600 bg-transparent active:bg-primary-50',
-    ghost: 'bg-transparent active:bg-dark-100',
+    outline: 'border-2 border-primary-600 bg-white/70 active:bg-primary-50',
+    ghost: 'bg-transparent active:bg-white/60',
     danger: 'bg-red-600 active:bg-red-700',
   };
 
@@ -44,6 +45,9 @@ export default function Button({
     lg: 'text-lg',
   };
 
+  const iconColor =
+    variant === 'outline' || variant === 'ghost' ? COLORS.primary : '#fff';
+
   const isDisabled = disabled || loading;
 
   return (
@@ -58,33 +62,46 @@ export default function Button({
         ${isDisabled ? 'opacity-50' : ''}
         ${className}
       `}
+      style={
+        variant === 'primary'
+          ? {
+              shadowColor: COLORS.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.22,
+              shadowRadius: 8,
+              elevation: 3,
+            }
+          : undefined
+      }
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'outline' || variant === 'ghost' ? '#ef4444' : '#fff'} />
+        <ActivityIndicator color={iconColor} />
       ) : (
         <>
           {icon && iconPosition === 'left' && (
             <Ionicons
               name={icon}
               size={size === 'lg' ? 24 : size === 'sm' ? 16 : 20}
-              color={variant === 'outline' || variant === 'ghost' ? '#ef4444' : '#fff'}
-              style={{ marginRight: 8 }}
+              color={iconColor}
+              style={{ marginRight: title ? 8 : 0 }}
             />
           )}
-          <Text
-            className={`
-              ${textVariantStyles[variant]}
-              ${textSizeStyles[size]}
-            `}
-          >
-            {title}
-          </Text>
+          {title ? (
+            <Text
+              className={`
+                ${textVariantStyles[variant]}
+                ${textSizeStyles[size]}
+              `}
+            >
+              {title}
+            </Text>
+          ) : null}
           {icon && iconPosition === 'right' && (
             <Ionicons
               name={icon}
               size={size === 'lg' ? 24 : size === 'sm' ? 16 : 20}
-              color={variant === 'outline' || variant === 'ghost' ? '#ef4444' : '#fff'}
-              style={{ marginLeft: 8 }}
+              color={iconColor}
+              style={{ marginLeft: title ? 8 : 0 }}
             />
           )}
         </>

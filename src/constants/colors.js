@@ -1,7 +1,8 @@
+/** Tokens alineados con la web (blanco + azul). */
 export const COLORS = {
-  primary: '#ef4444',
-  primaryDark: '#dc2626',
-  primaryLight: '#f87171',
+  primary: '#2563eb',
+  primaryDark: '#1d4ed8',
+  primaryLight: '#60a5fa',
 
   secondary: '#3b82f6',
   secondaryDark: '#2563eb',
@@ -9,18 +10,20 @@ export const COLORS = {
   success: '#10b981',
   warning: '#f59e0b',
   error: '#ef4444',
-  info: '#3b82f6',
+  info: '#2563eb',
 
-  background: '#ffffff',
-  backgroundDark: '#0f172a',
-  surface: '#f8fafc',
+  background: '#f0f7ff',
+  backgroundElevated: '#f8fafc',
+  surface: 'rgba(255, 255, 255, 0.82)',
+  surfaceSolid: '#ffffff',
   surfaceDark: '#1e293b',
 
   text: '#0f172a',
   textLight: '#64748b',
   textDark: '#f8fafc',
 
-  border: '#e2e8f0',
+  border: 'rgba(37, 99, 235, 0.12)',
+  borderSolid: '#e2e8f0',
   borderDark: '#334155',
 
   white: '#ffffff',
@@ -57,4 +60,10 @@ export const PRIORITY_COLORS = {
   medium: COLORS.medium,
   high: COLORS.high,
   critical: COLORS.critical,
+};
+
+export const GLASS = {
+  background: 'rgba(255, 255, 255, 0.82)',
+  border: 'rgba(37, 99, 235, 0.12)',
+  tabBar: 'rgba(255, 255, 255, 0.92)',
 };

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
+import { COLORS } from '../../constants/colors';
 import { formatRelativeTime, getIncidentTypeLabel, getIncidentTypeIcon, getStatusLabel, getPriorityLabel } from '../../utils/format';
 
 export default function IncidentCard({ incident, onPress }) {
@@ -11,7 +12,7 @@ export default function IncidentCard({ incident, onPress }) {
       <View className="flex-row items-start justify-between mb-2">
         <View className="flex-row items-center flex-1">
           <View className="w-10 h-10 rounded-full bg-primary-100 items-center justify-center mr-3">
-            <Ionicons name={getIncidentTypeIcon(incident.incident_type)} size={20} color="#ef4444" />
+            <Ionicons name={getIncidentTypeIcon(incident.incident_type)} size={20} color={COLORS.primary} />
           </View>
           <View className="flex-1">
             <Text className="text-dark-900 font-bold text-base">
@@ -59,7 +60,7 @@ export default function IncidentCard({ incident, onPress }) {
       )}
 
       {incident.assignment && (
-        <View className="mt-3 pt-3 border-t border-dark-100">
+        <View className="mt-3 pt-3 border-t border-primary-100">
           <View className="flex-row items-center flex-wrap">
             <Ionicons name="construct" size={16} color="#10b981" />
             <Text className="text-dark-700 font-semibold text-sm ml-2">

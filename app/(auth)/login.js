@@ -6,14 +6,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+import AppScreen from '../../src/components/ui/AppScreen';
+import Card from '../../src/components/ui/Card';
 import Input from '../../src/components/ui/Input';
 import Button from '../../src/components/ui/Button';
 import { useAuthStore } from '../../src/store/auth.store';
+import { COLORS } from '../../src/constants/colors';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -54,39 +57,65 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <AppScreen>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <View className="flex-1 px-6 justify-center">
-            {/* Logo y título */}
-            <View className="items-center mb-10">
-              <Image
-                source={require('../../assets/logo1.png')}
-                style={{ width: 140, height: 140 }}
-                resizeMode="contain"
-              />
-              <Text className="text-3xl font-bold text-dark-900 mt-4">
+          <View className="flex-1 justify-center py-6">
+            {/* Brand */}
+            <View className="items-center mb-8">
+              <View
+                className="rounded-3xl p-3 mb-4 border border-primary-100"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.88)',
+                  shadowColor: '#2563eb',
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 16,
+                  elevation: 4,
+                }}
+              >
+                <Image
+                  source={require('../../assets/logo1.png')}
+                  style={{ width: 120, height: 120 }}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text className="text-primary-600 font-semibold text-xs uppercase tracking-widest">
+                Mecanic La Leyenda
+              </Text>
+              <Text className="text-dark-900 font-bold text-3xl tracking-tight mt-1">
                 Bienvenido
               </Text>
-              <Text className="text-dark-600 text-base mt-2">
-                Inicia sesión para continuar en AhoringaLlego
+              <Text className="text-dark-500 text-sm mt-2 text-center leading-5 px-4">
+                Inicia sesión para reportar emergencias y seguir tus solicitudes
               </Text>
             </View>
 
             {/* Formulario */}
-            <View className="mb-6">
+            <Card className="p-5 mb-5">
+              <View className="flex-row items-center mb-4">
+                <View className="w-10 h-10 rounded-xl bg-primary-50 items-center justify-center mr-3">
+                  <Ionicons name="log-in-outline" size={22} color={COLORS.primary} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-dark-900 font-bold text-base">Iniciar sesión</Text>
+                  <Text className="text-dark-500 text-xs mt-0.5">Cliente o técnico de taller</Text>
+                </View>
+              </View>
+
               <Input
-                label="Usuario o Email"
+                label="Usuario o email"
                 value={username}
                 onChangeText={setUsername}
                 placeholder="Ingresa tu usuario o email"
-                leftIcon="person"
+                leftIcon="person-outline"
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -96,35 +125,44 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Ingresa tu contraseña"
-                leftIcon="lock-closed"
+                leftIcon="lock-closed-outline"
                 secureTextEntry
+                className="mb-0"
               />
-            </View>
+            </Card>
 
             <Button
-              title="Iniciar Sesión"
+              title="Iniciar sesión"
               onPress={handleLogin}
               loading={loading}
               full
               size="lg"
-              icon="log-in"
+              icon="arrow-forward-circle-outline"
+              iconPosition="right"
             />
 
-            {/* Links adicionales */}
-            <View className="mt-6 items-center">
-              <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-                <Text className="text-dark-600 text-base text-center">
-                  ¿Cliente nuevo?{' '}
-                  <Text className="text-primary-600 font-bold">Regístrate aquí</Text>
-                </Text>
-              </TouchableOpacity>
-              <Text className="text-dark-500 text-xs text-center mt-3 px-4">
-                Personal de taller (técnicos): solo inicio de sesión, sin registro en la app.
+            <Pressable
+              onPress={() => router.push('/(auth)/register')}
+              className="mt-6 items-center py-2 active:opacity-80"
+            >
+              <Text className="text-dark-600 text-sm text-center">
+                ¿Cliente nuevo?{' '}
+                <Text className="text-primary-600 font-bold">Crear cuenta</Text>
+              </Text>
+            </Pressable>
+
+            <View
+              className="flex-row items-start rounded-2xl border border-primary-100 px-3 py-3 mt-4"
+              style={{ backgroundColor: 'rgba(239,246,255,0.65)' }}
+            >
+              <Ionicons name="information-circle-outline" size={18} color={COLORS.primary} style={{ marginTop: 1 }} />
+              <Text className="text-dark-600 text-xs ml-2 flex-1 leading-4">
+                Técnicos de taller: usa las credenciales que te dio el administrador. No hay registro en la app.
               </Text>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

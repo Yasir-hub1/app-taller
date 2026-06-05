@@ -36,7 +36,7 @@ export default function RootLayout() {
           urlScheme={APP_URL_SCHEME}
           setReturnUrlSchemeOnAndroid={true}
         >
-          <StatusBar style="auto" />
+          <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="(auth)" />

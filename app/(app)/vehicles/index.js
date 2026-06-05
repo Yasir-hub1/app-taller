@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, RefreshControl, Alert, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +9,9 @@ import Card from '../../../src/components/ui/Card';
 import Button from '../../../src/components/ui/Button';
 import Loading from '../../../src/components/ui/Loading';
 import Badge from '../../../src/components/ui/Badge';
+import AppScreen from '../../../src/components/ui/AppScreen';
+import PageHeader from '../../../src/components/ui/PageHeader';
+import { COLORS } from '../../../src/constants/colors';
 import { normalizeListResponse } from '../../../src/utils/apiList';
 import { resolveMediaUrl } from '../../../src/utils/media';
 
@@ -79,14 +81,11 @@ export default function VehiclesScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      {/* Header */}
-      <View className="px-4 py-3 border-b border-dark-100">
-        <View className="flex-row items-center justify-between">
-          <View>
-            <Text className="text-dark-900 font-bold text-xl">Mis Vehículos</Text>
-            <Text className="text-dark-600 text-sm">{vehicles.length} vehículos registrados</Text>
-          </View>
+    <AppScreen>
+      <PageHeader
+        title="Mis vehículos"
+        subtitle={`${vehicles.length} vehículos registrados`}
+        right={
           <Button
             title="Agregar"
             onPress={() => router.push('/vehicles/add')}
@@ -94,30 +93,34 @@ export default function VehiclesScreen() {
             size="sm"
             icon="add"
           />
-        </View>
-      </View>
+        }
+      />
 
-      {/* Lista de vehículos */}
       <ScrollView
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 16, paddingTop: 0 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#ef4444']} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
         }
       >
         {isLoading ? (
           <Loading message="Cargando vehículos..." />
         ) : vehicles.length === 0 ? (
           <View className="items-center justify-center py-12">
-            <Ionicons name="car-outline" size={64} color="#cbd5e1" />
-            <Text className="text-dark-600 text-base mt-4 text-center">
+            <View className="w-20 h-20 rounded-full bg-primary-50 items-center justify-center mb-4">
+              <Ionicons name="car-sport-outline" size={40} color={COLORS.primary} />
+            </View>
+            <Text className="text-dark-700 font-semibold text-base text-center">
               No tienes vehículos registrados
+            </Text>
+            <Text className="text-dark-500 text-sm mt-2 text-center px-6">
+              Registra tu vehículo para poder reportar emergencias.
             </Text>
             <Button
               title="Agregar mi primer vehículo"
               onPress={() => router.push('/vehicles/add')}
               variant="primary"
               size="md"
-              icon="add-circle"
+              icon="add-circle-outline"
               className="mt-4"
             />
           </View>
@@ -135,8 +138,8 @@ export default function VehiclesScreen() {
                     className="w-14 h-14 rounded-xl bg-dark-100 mr-3"
                   />
                 ) : (
-                  <View className="w-14 h-14 rounded-xl bg-primary-100 items-center justify-center mr-3">
-                    <Ionicons name={getVehicleIcon(vehicle.vehicle_type)} size={28} color="#ef4444" />
+                  <View className="w-14 h-14 rounded-xl bg-primary-50 items-center justify-center mr-3">
+                    <Ionicons name={getVehicleIcon(vehicle.vehicle_type)} size={28} color={COLORS.primary} />
                   </View>
                 )}
 
@@ -177,6 +180,6 @@ export default function VehiclesScreen() {
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

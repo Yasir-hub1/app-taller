@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, GLASS } from '../../constants/colors';
 
 export default function Input({
   label,
@@ -25,25 +26,25 @@ export default function Input({
   return (
     <View className={`mb-4 ${className}`}>
       {label && (
-        <Text className="text-dark-700 font-semibold mb-2 text-sm">
-          {label}
-        </Text>
+        <Text className="text-dark-700 font-semibold mb-2 text-sm">{label}</Text>
       )}
 
       <View
         className={`
-          flex-row items-center bg-dark-50 rounded-xl px-4
+          flex-row items-center rounded-xl px-4
           ${multiline ? 'py-3' : 'h-12'}
-          ${isFocused ? 'border-2 border-primary-500' : 'border border-dark-200'}
-          ${error ? 'border-red-500' : ''}
-          ${!editable ? 'bg-dark-100' : ''}
+          ${error ? 'border-red-500' : isFocused ? 'border-2 border-primary-500' : 'border border-primary-200'}
+          ${!editable ? 'opacity-70' : ''}
         `}
+        style={{
+          backgroundColor: editable ? GLASS.background : 'rgba(248, 250, 252, 0.9)',
+        }}
       >
         {leftIcon && (
           <Ionicons
             name={leftIcon}
             size={20}
-            color="#64748b"
+            color={COLORS.textLight}
             style={{ marginRight: 10 }}
           />
         )}
@@ -69,24 +70,18 @@ export default function Input({
 
         {secureTextEntry && (
           <TouchableOpacity onPress={() => setIsSecure(!isSecure)}>
-            <Ionicons
-              name={isSecure ? 'eye-off' : 'eye'}
-              size={20}
-              color="#64748b"
-            />
+            <Ionicons name={isSecure ? 'eye-off' : 'eye'} size={20} color={COLORS.textLight} />
           </TouchableOpacity>
         )}
 
         {rightIcon && !secureTextEntry && (
           <TouchableOpacity onPress={onRightIconPress}>
-            <Ionicons name={rightIcon} size={20} color="#64748b" />
+            <Ionicons name={rightIcon} size={20} color={COLORS.textLight} />
           </TouchableOpacity>
         )}
       </View>
 
-      {error && (
-        <Text className="text-red-500 text-xs mt-1 ml-1">{error}</Text>
-      )}
+      {error && <Text className="text-red-500 text-xs mt-1 ml-1">{error}</Text>}
     </View>
   );
 }

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import Input from '../../../src/components/ui/Input';
 import Button from '../../../src/components/ui/Button';
+import AppScreen from '../../../src/components/ui/AppScreen';
+import PageHeader from '../../../src/components/ui/PageHeader';
 import { authApi } from '../../../src/api/auth.api';
 import { useAuthStore } from '../../../src/store/auth.store';
 import { formatApiError } from '../../../src/utils/apiErrors';
@@ -72,7 +73,7 @@ export default function ProfileEditScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <AppScreen>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
@@ -81,23 +82,13 @@ export default function ProfileEditScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text className="text-dark-900 font-bold text-2xl mb-1">Editar perfil</Text>
-          <Text className="text-dark-600 text-sm mb-6">
-            Actualiza tus datos de contacto y la información de emergencia.
-          </Text>
+          <PageHeader
+            title="Editar perfil"
+            subtitle="Actualiza tus datos de contacto y la información de emergencia."
+          />
 
-          <Input
-            label="Nombre *"
-            value={first_name}
-            onChangeText={setFirstName}
-            placeholder="Tu nombre"
-          />
-          <Input
-            label="Apellido *"
-            value={last_name}
-            onChangeText={setLastName}
-            placeholder="Tu apellido"
-          />
+          <Input label="Nombre *" value={first_name} onChangeText={setFirstName} placeholder="Tu nombre" />
+          <Input label="Apellido *" value={last_name} onChangeText={setLastName} placeholder="Tu apellido" />
           <Input
             label="Teléfono"
             value={phone}
@@ -105,12 +96,7 @@ export default function ProfileEditScreen() {
             placeholder="Ej: 70000000"
             keyboardType="phone-pad"
           />
-          <Input
-            label="Correo"
-            value={user?.email || ''}
-            editable={false}
-            placeholder="—"
-          />
+          <Input label="Correo" value={user?.email || ''} editable={false} placeholder="—" />
           <Text className="text-dark-500 text-xs -mt-2 mb-4">
             El correo no se puede cambiar desde la app.
           </Text>
@@ -146,7 +132,7 @@ export default function ProfileEditScreen() {
             loading={saveMutation.isPending}
             full
             size="lg"
-            icon="checkmark-circle"
+            icon="checkmark-circle-outline"
             className="mt-4"
           />
           <Button
@@ -159,6 +145,6 @@ export default function ProfileEditScreen() {
           />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }
