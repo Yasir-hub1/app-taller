@@ -68,6 +68,20 @@ export default function TechnicianProfileScreen() {
           </Card>
 
           <Card
+            onPress={() => router.push('/(technician)/profile/reports')}
+            className="p-4 mb-2 flex-row items-center active:bg-dark-50"
+          >
+            <Ionicons name="bar-chart" size={22} color="#1d9e75" />
+            <View className="flex-1 ml-3">
+              <Text className="text-dark-900 font-semibold">Mis reportes</Text>
+              <Text className="text-dark-500 text-sm">
+                Órdenes activas, completadas y resumen por voz
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+          </Card>
+
+          <Card
             onPress={() => router.push('/(technician)/profile/change-password')}
             className="p-4 mb-2 flex-row items-center active:bg-dark-50"
           >

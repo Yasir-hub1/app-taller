@@ -44,6 +44,7 @@ export default function TechnicianTabsLayout() {
         }}
       />
       <Tabs.Screen name="profile/change-password" options={{ href: null }} />
+      <Tabs.Screen name="profile/reports" options={{ href: null }} />
     </Tabs>
   );
 }

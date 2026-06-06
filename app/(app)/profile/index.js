@@ -58,6 +58,12 @@ export default function ProfileScreen() {
       subtitle: 'Actualiza tu contraseña de acceso',
       onPress: () => router.push('/profile/change-password'),
     },
+    {
+      icon: 'bar-chart',
+      title: 'Mis reportes',
+      subtitle: 'Consulta por voz tus solicitudes, pagos y servicios',
+      onPress: () => router.push('/profile/reports'),
+    },
     // {
     //   icon: 'notifications',
     //   title: 'Notificaciones',
